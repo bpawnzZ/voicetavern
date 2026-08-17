@@ -1,8 +1,11 @@
 # VoiceTavern 🎙️
 
 <p align="center">
-  <b>A modern, ultra-low latency real-time voice chat frontend for SillyTavern character cards.</b><br>
-  <b>基于阿里云通义千问 Realtime 实时语音大模型与 Qwen-Max 的酒馆角色卡语音对话系统。</b>
+  <b>A modern, ultra-low latency real-time voice chat frontend for SillyTavern character cards.</b>
+</p>
+
+<p align="center">
+  <a href="README_CN.md">🇨🇳 简体中文</a> | <a href="README.md">🇺🇸 English</a>
 </p>
 
 <p align="center">
@@ -15,35 +18,20 @@
 
 ---
 
-## 🌟 核心特性 / Features
+## 🌟 Key Features
 
-### 🇨🇳 中文
-
-- 🎙️ **全双工实时语音交互**：基于通义千问 Realtime (`qwen-audio-3.0-realtime-plus` / `qwen-omni-turbo`) WebSocket 协议，实现真人级别的超低延迟连麦通话体验。
-- 🎴 **原生兼容酒馆角色卡**：支持直接拖拽导入标准 V1 / V2 格式的 PNG/JSON 角色卡，自动解析嵌入的 Character Book（世界书常驻条目）、Personality、Scenario 与 System Prompt。
-- 🤖 **AI 一键无损清洗 (Qwen3.8-Max)**：专为复杂文字 RPG 角色卡打造。通过 Qwen-Max 智能剔除对语音对话有害的 XML 标签（如 `<UpdateVariable>`、`<Analysis>`、`<summary>`）和数值追踪规则，100% 保留角色背景、多重人格与说话风格。
-- 📝 **双栏对比编辑器**：提供“转写前（原始提取信息）”与“转写后（最终系统提示词）”的双栏对照视图，支持即时手动微调与二次编辑。
-- 🗣️ **语音专属优化指令**：内置 VoiceTavern 语音引擎，强制控制 AI 输出简短、自然、富有感情，自动加入口语语气词（嗯、啊、哎），避免朗读星号动作（`*smiles*`）。
-- 🏷️ **灵活的称呼与变量替换**：支持在设置中自定义用户昵称，自动匹配替换 `{{user}}`、`<user>`、`{{char}}` 等占位符。
-- 🔒 **本地优先与隐私安全**：API 密钥、角色卡库、世界书及历史对话完全保存在浏览器本地（`localforage` / IndexedDB），不经过任何第三方服务器中转。
-- 📦 **拖拽管理与会话存档**：支持角色卡拖拽自由排序、批量删除管理，以及历史多会话随时切换与重命名。
-
----
-
-### 🇺🇸 English
-
-- 🎙️ **Full-Duplex Real-Time Voice Chat**: Built on Alibaba DashScope Realtime Audio WebSocket API for ultra-low latency, natural voice-to-voice conversation.
-- 🎴 **Native SillyTavern Card Support**: Seamlessly import V1/V2 PNG/JSON character cards. Automatically extracts embedded lorebooks, descriptions, scenarios, and custom system prompts.
-- 🤖 **Lossless AI Card Purification (Qwen3.8-Max)**: Specially engineered for complex text-RPG cards. Automatically cleanses voice-breaking XML tags (`<UpdateVariable>`, `<Analysis>`), JSON wrappers, and stat-tracking mechanics while preserving 100% of personality and lore.
-- 📝 **Dual-Pane Side-by-Side Editor**: Compare raw extracted card data with the purified system prompt, with in-place manual editing support.
-- 🗣️ **Voice-First Conversational Directives**: Built-in prompts tailored for verbal dialogue—enforcing concise responses, natural speech fillers, and suppressing non-verbal asterisk actions.
+- 🎙️ **Full-Duplex Real-Time Voice Chat**: Built on Alibaba DashScope Realtime Audio WebSocket API (`qwen-audio-3.0-realtime-plus` / `qwen-omni-turbo`) for ultra-low latency, natural voice-to-voice conversation.
+- 🎴 **Native SillyTavern Card Support**: Seamlessly import V1/V2 PNG/JSON character cards. Automatically extracts embedded lorebooks (`character_book`), descriptions, scenarios, personalities, and custom system prompts.
+- 🤖 **Lossless AI Card Purification (Qwen3.8-Max)**: Specially engineered for complex text-RPG cards. Automatically cleanses voice-breaking XML tags (`<UpdateVariable>`, `<Analysis>`, `<summary>`), JSON wrappers, and stat-tracking mechanics while preserving 100% of personality, backstory, and dialogue styles.
+- 📝 **Dual-Pane Side-by-Side Comparison Editor**: Compare raw extracted card data with the purified system prompt, with full in-place manual editing capabilities.
+- 🗣️ **Voice-First Conversational Directives**: Built-in prompts tailored for verbal dialogue—enforcing concise responses (1-2 sentences per turn), natural speech fillers (e.g., *uh, um, well*), and suppressing non-verbal asterisk actions (`*smiles*`).
 - 🏷️ **Dynamic Placeholder Replacement**: Configure your custom user name in settings with automatic mapping for `{{user}}`, `<user>`, and `{{char}}`.
-- 🔒 **Local-First & Privacy Guaranteed**: API keys, cards, and session records are stored strictly on your device via IndexedDB. No intermediate servers.
-- 📦 **Library & Session Management**: Reorder cards via drag-and-drop, batch management, and persistent multi-session chat history.
+- 🔒 **Local-First & Privacy Guaranteed**: API keys, cards, worldbooks, and session records are stored strictly on your device via IndexedDB (`localforage`). No intermediate servers.
+- 📦 **Library & Session Management**: Reorder cards via drag-and-drop (`@dnd-kit`), batch management, and persistent multi-session chat history.
 
 ---
 
-## 🛠️ 技术栈 / Tech Stack
+## 🛠️ Tech Stack
 
 - **Frontend Core**: React 19, TypeScript, Vite 8
 - **Styling**: TailwindCSS, Lucide Icons
@@ -53,30 +41,30 @@
 
 ---
 
-## 🚀 快速上手 / Quick Start
+## 🚀 Quick Start
 
-### 1. 前置准备 / Prerequisites
+### 1. Prerequisites
 
 - [Node.js](https://nodejs.org/) (>= 18.0.0)
-- 阿里云百炼 / DashScope API Key（开通通义千问 Realtime 语音模型权限，前往 [阿里云百炼控制台](https://bailian.console.aliyun.com/) 获取）
+- DashScope API Key with access to Qwen Realtime Audio models (Get one from [Alibaba Cloud DashScope Console](https://bailian.console.aliyun.com/)).
 
-### 2. 安装与运行 / Installation
+### 2. Installation & Run
 
 ```bash
-# 1. 克隆本仓库 / Clone repository
+# 1. Clone the repository
 git clone https://github.com/lukelzlz/voicetavern.git
 cd voicetavern
 
-# 2. 安装依赖 / Install dependencies
+# 2. Install dependencies
 npm install
 
-# 3. 启动本地开发服务 / Start development server
+# 3. Start development server
 npm run dev
 ```
 
-打开浏览器访问 `http://localhost:5173`。
+Open your browser and navigate to `http://localhost:5173`.
 
-### 3. 构建生产版本 / Production Build
+### 3. Production Build
 
 ```bash
 npm run build
@@ -85,44 +73,43 @@ npm run preview
 
 ---
 
-## 📖 使用指南 / Usage Guide
+## 📖 Usage Guide
 
-1. **配置密钥 (Setup Key)**:
-   - 首次打开应用后，点击右上角的 **⚙️ 设置** 图标。
-   - 输入您的 `DashScope API Key`，以及希望角色称呼您的 **用户昵称**。
-2. **导入角色卡 (Import Character)**:
-   - 在左侧资料库中，点击 **“导入资源”** 或直接将 PNG / JSON 角色卡文件拖入页面。
-3. **AI 一键清洗（可选 / Optional）**:
-   - 右键点击角色卡选择 **“编辑”**。
-   - 点击左下角 **“🤖 AI 一键清洗与重写”**，大模型将自动剔除复杂的 XML 格式并重写为纯粹的语音系统提示词。
-   - 在右侧面板中确认或微调提示词后，点击 **“保存修改”**。
-4. **开始连麦通话 (Start Voice Call)**:
-   - 选择角色卡，点击底部的 **麦克风** 按钮连接语音。
-   - 开启麦克风权限后，即可与角色进行实时语音对话！
+1. **Setup Key & User Profile**:
+   - Click the **⚙️ Settings** icon in the top-right corner.
+   - Enter your `DashScope API Key` and specify your **User Name** (for placeholder substitution).
+2. **Import Character Cards**:
+   - In the left sidebar, click **"Import Resource"** or drag-and-drop PNG / JSON character cards into the window.
+3. **AI One-Click Card Purification (Optional)**:
+   - Right-click on a character card and select **"Edit"**.
+   - Click **"🤖 AI One-Click Cleanse & Rewrite"**. Qwen-Max will strip complex XML formats into clean, voice-ready system prompts.
+   - Review or tweak the prompt in the right-hand panel, then click **"Save Changes"**.
+4. **Start Voice Call**:
+   - Select the character, click the **Microphone** button at the bottom to establish the WebSocket connection, and start speaking!
 
 ---
 
-## 📂 项目结构 / Project Structure
+## 📂 Project Structure
 
 ```text
 voicetavern/
 ├── src/
-│   ├── api/                 # DashScope 文本与处理 API
-│   │   ├── qwen_realtime.ts # Realtime 实时语音客户端
-│   │   └── qwen_text.ts     # Qwen-Max 角色卡清洗与无损重写
-│   ├── components/          # UI 组件
-│   │   ├── ChatLayout.tsx   # 核心聊天与语音交互主界面
-│   │   └── LibrarySidebar.tsx # 角色卡库、世界书与会话管理侧边栏
-│   ├── store/               # Zustand 全局状态管理与持久化
+│   ├── api/                 # DashScope API integration
+│   │   ├── qwen_realtime.ts # Realtime Audio WebSocket client
+│   │   └── qwen_text.ts     # Qwen-Max card cleansing & lossless purification
+│   ├── components/          # UI Components
+│   │   ├── ChatLayout.tsx   # Main voice chat & layout
+│   │   └── LibrarySidebar.tsx # Card library, worldbook & session sidebar
+│   ├── store/               # Zustand state & persistence
 │   │   └── index.ts
-│   ├── utils/               # 工具函数
-│   │   ├── audio_recorder.ts# 音频流采集与重采样
-│   │   ├── preset_engine.ts # 酒馆提示词组装与 Voice 优化引擎
-│   │   ├── storage.ts       # localforage 本地存储封装
-│   │   ├── tavern_parser.ts # PNG tEXt Chunk 解析与角色卡解码
-│   │   └── worldbook_engine.ts # 世界书解析
-│   ├── App.tsx              # 应用入口与全局弹窗
-│   ├── index.css            # Tailwind 样式定义
+│   ├── utils/               # Utility functions
+│   │   ├── audio_recorder.ts# Audio stream recording & resampling
+│   │   ├── preset_engine.ts # Prompt assembly & voice prompt injection
+│   │   ├── storage.ts       # localforage storage wrapper
+│   │   ├── tavern_parser.ts # PNG tEXt Chunk parser & card decoder
+│   │   └── worldbook_engine.ts # Worldbook parser
+│   ├── App.tsx              # Application entry & modals
+│   ├── index.css            # Tailwind stylesheet
 │   └── main.tsx
 ├── package.json
 ├── tailwind.config.js
@@ -132,6 +119,6 @@ voicetavern/
 
 ---
 
-## 📄 开源许可 / License
+## 📄 License
 
-本项目采用 [MIT License](LICENSE) 许可证开源。
+This project is open-sourced under the [MIT License](LICENSE).
