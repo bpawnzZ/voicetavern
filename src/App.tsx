@@ -12,6 +12,7 @@ import {
   GLM_VOICES 
 } from './api/types';
 import type { VoiceProvider, ProviderConfig } from './api/types';
+import { downloadBackupFile, importFullBackup } from './utils/backup';
 
 export default function App() {
   const { 
@@ -235,11 +236,57 @@ export default function App() {
                 </label>
               </div>
 
+              {/* 数据备份与跨端迁移 */}
+              <div className="pt-2 border-t border-slate-200">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  数据备份与跨端迁移
+                </label>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await downloadBackupFile();
+                      } catch (e: any) {
+                        alert('导出失败: ' + e.message);
+                      }
+                    }}
+                    className="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300/80 rounded-xl text-xs font-semibold flex items-center justify-center transition-colors"
+                  >
+                    📦 导出全量备份 (.vtbackup)
+                  </button>
+                  <label className="flex-1 py-2 px-3 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer transition-colors">
+                    📥 恢复备份文件
+                    <input
+                      type="file"
+                      accept=".vtbackup,.json"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const text = await file.text();
+                          await importFullBackup(text);
+                          alert('备份恢复成功！');
+                          setIsSettingsOpen(false);
+                        } catch (err: any) {
+                          alert(err.message);
+                        }
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  一键将所有角色卡、世界书、聊天记录与密钥配置打包，方便在 PC、安卓与 iOS 设备间无缝同步。
+                </p>
+              </div>
+
               <div>
-                <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-100 flex items-start space-x-3">
+                <div className="mt-2 p-3 rounded-lg bg-blue-50 border border-blue-100 flex items-start space-x-3">
                   <ShieldAlert size={18} className="text-blue-500 shrink-0 mt-0.5" />
                   <p className="text-xs text-blue-800/80 leading-relaxed">
-                    隐私安全承诺：您的 API Key 将仅保存在本地浏览器的 localStorage 中，绝不会上传至第三方服务器。
+                    隐私安全承诺：您的 API Key 将仅保存在本地设备中，绝不会上传至第三方服务器。
                   </p>
                 </div>
               </div>

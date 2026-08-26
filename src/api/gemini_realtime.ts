@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class GeminiRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -33,7 +34,7 @@ export class GeminiRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/gemini-ws/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('gemini', { apiKey: this.apiKey });
     
     this.ws = new WebSocket(wsUrl);
 

@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class OpenAIRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -35,7 +36,7 @@ export class OpenAIRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/openai-ws/v1/realtime?model=${this.model}&api_key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('openai', { apiKey: this.apiKey, model: this.model });
     
     this.ws = new WebSocket(wsUrl);
 

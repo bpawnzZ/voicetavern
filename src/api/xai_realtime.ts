@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class XAIRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -32,7 +33,7 @@ export class XAIRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/xai-ws/v1/realtime?model=grok-voice-latest&api_key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('xai', { apiKey: this.apiKey, model: 'grok-voice-latest' });
     
     this.ws = new WebSocket(wsUrl);
 

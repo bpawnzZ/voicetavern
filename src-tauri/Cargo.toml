@@ -1,0 +1,20 @@
+[package]
+name = "voicetavern"
+version = "1.0.0"
+description = "Real-time voice chat frontend for SillyTavern character cards"
+authors = ["VoiceTavern Contributors"]
+edition = "2021"
+
+[lib]
+name = "voicetavern_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-fs = "2"
+tauri-plugin-store = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

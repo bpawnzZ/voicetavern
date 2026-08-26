@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class GLMRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -32,7 +33,7 @@ export class GLMRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/glm-ws/api/paas/v4/realtime?model=glm-realtime&api_key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('glm', { apiKey: this.apiKey, model: 'glm-realtime' });
     
     this.ws = new WebSocket(wsUrl);
 

@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class QwenRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -32,8 +33,7 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    // In dev, use the vite proxy. In prod, this would point to a real proxy server.
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api-ws/v1/realtime?model=qwen-audio-3.0-realtime-plus&api_key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('qwen', { apiKey: this.apiKey, model: 'qwen-audio-3.0-realtime-plus' });
     
     this.ws = new WebSocket(wsUrl);
 

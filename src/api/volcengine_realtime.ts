@@ -1,5 +1,6 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
+import { getWebSocketUrl } from './utils';
 
 export class VolcengineRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
@@ -33,7 +34,7 @@ export class VolcengineRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/volc-ws/api/v1/realtime_dialogue?app_id=${this.appId}&api_key=${this.apiKey}`;
+    const wsUrl = getWebSocketUrl('volcengine', { apiKey: this.apiKey, appId: this.appId });
     
     this.ws = new WebSocket(wsUrl);
 
