@@ -14,6 +14,18 @@ interface AppState {
   userName: string;
   setUserName: (name: string) => void;
 
+  voiceProvider: 'qwen' | 'xai';
+  setVoiceProvider: (provider: 'qwen' | 'xai') => void;
+
+  xaiApiKey: string;
+  setXaiApiKey: (key: string) => void;
+
+  qwenVoice: string;
+  setQwenVoice: (voice: string) => void;
+
+  xaiVoice: string;
+  setXaiVoice: (voice: string) => void;
+
   characters: { id: string; card: TavernCardV2; avatarUrl?: string }[];
   worldbooks: { id: string; book: Worldbook }[];
   sessions: ChatSession[];
@@ -71,6 +83,30 @@ export const useAppStore = create<AppState>((set) => ({
   setUserName: (name) => {
     localStorage.setItem('vt_user_name', name);
     set({ userName: name });
+  },
+
+  voiceProvider: (localStorage.getItem('vt_voice_provider') as 'qwen' | 'xai') || 'qwen',
+  setVoiceProvider: (provider) => {
+    localStorage.setItem('vt_voice_provider', provider);
+    set({ voiceProvider: provider });
+  },
+
+  xaiApiKey: localStorage.getItem('xai_api_key') || '',
+  setXaiApiKey: (key) => {
+    localStorage.setItem('xai_api_key', key);
+    set({ xaiApiKey: key });
+  },
+
+  qwenVoice: localStorage.getItem('vt_qwen_voice') || 'longanqian',
+  setQwenVoice: (voice) => {
+    localStorage.setItem('vt_qwen_voice', voice);
+    set({ qwenVoice: voice });
+  },
+
+  xaiVoice: localStorage.getItem('vt_xai_voice') || 'eve',
+  setXaiVoice: (voice) => {
+    localStorage.setItem('vt_xai_voice', voice);
+    set({ xaiVoice: voice });
   },
 
   characters: [],

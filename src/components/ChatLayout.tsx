@@ -2,14 +2,16 @@ import { useRef, useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import { QwenRealtimeClient } from '../api/qwen_realtime';
+import { XAIRealtimeClient } from '../api/xai_realtime';
+import type { RealtimeVoiceClient } from '../api/types';
 import { Mic, MicOff, Menu, X } from 'lucide-react';
 import AudioVisualizer from './AudioVisualizer';
 import LibrarySidebar from './LibrarySidebar';
 import { assemblePrompt } from '../utils/preset_engine';
 
 export default function ChatLayout() {
-  const { apiKey, activeCharacter, activeWorldbook, messages, addMessage, isConnected, setIsConnected } = useAppStore();
-  const [client, setClient] = useState<QwenRealtimeClient | null>(null);
+  const { apiKey, xaiApiKey, voiceProvider, qwenVoice, xaiVoice, activeCharacter, activeWorldbook, messages, addMessage, isConnected, setIsConnected } = useAppStore();
+  const [client, setClient] = useState<RealtimeVoiceClient | null>(null);
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -26,7 +28,8 @@ export default function ChatLayout() {
       setClient(null);
       setIsConnected(false);
     } else {
-      if (!apiKey) return alert("请先在设置中填写 API Key");
+      const activeKey = voiceProvider === 'qwen' ? apiKey : xaiApiKey;
+      if (!activeKey) return alert(`请先在设置中填写 ${voiceProvider === 'qwen' ? 'DashScope' : 'xAI'} API Key`);
       
       let wbEngine: WorldbookEngine | undefined = undefined;
       let constantLore: string[] = [];
@@ -63,25 +66,25 @@ export default function ChatLayout() {
       // 组装最终的 System Prompt
       const systemPrompt = assemblePrompt(null, charData, constantLore, useAppStore.getState().useVoicePrompt, useAppStore.getState().userName);
       
-      console.log('--- Final System Prompt ---\n', systemPrompt);
+      console.log(`--- Final System Prompt (${voiceProvider.toUpperCase()}) ---\n`, systemPrompt);
 
-      const newClient = new QwenRealtimeClient(
-        apiKey,
-        systemPrompt,
-        wbEngine,
-        (role, text, isDelta, id) => {
-          if (isDelta && id) {
-            useAppStore.getState().appendMessageDelta(id, role, text);
-          } else {
-            addMessage({ role, text, id });
-          }
-        },
-        (err) => {
-          console.error('API Error:', err);
-          alert(`连接错误: ${err}`);
-          setIsConnected(false);
+      const onMessage = (role: string, text: string, isDelta: boolean, id?: string) => {
+        if (isDelta && id) {
+          useAppStore.getState().appendMessageDelta(id, role, text);
+        } else {
+          addMessage({ role, text, id });
         }
-      );
+      };
+
+      const onError = (err: string) => {
+        console.error('API Error:', err);
+        alert(`连接错误: ${err}`);
+        setIsConnected(false);
+      };
+
+      const newClient: RealtimeVoiceClient = voiceProvider === 'qwen'
+        ? new QwenRealtimeClient(apiKey, systemPrompt, wbEngine, onMessage, onError, qwenVoice)
+        : new XAIRealtimeClient(xaiApiKey, systemPrompt, wbEngine, onMessage, onError, xaiVoice);
 
       try {
         await newClient.connect();

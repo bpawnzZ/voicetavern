@@ -1,6 +1,7 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
+import type { RealtimeVoiceClient } from './types';
 
-export class QwenRealtimeClient {
+export class QwenRealtimeClient implements RealtimeVoiceClient {
   private ws: WebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
@@ -12,19 +13,22 @@ export class QwenRealtimeClient {
   private worldbookEngine?: WorldbookEngine;
   private apiKey: string;
   private systemPrompt: string;
+  private voice: string;
 
   constructor(
     apiKey: string,
     systemPrompt: string,
     worldbookEngine?: WorldbookEngine,
     onMessage?: (role: string, text: string, isDelta: boolean, id?: string) => void,
-    onError?: (err: string) => void
+    onError?: (err: string) => void,
+    voice: string = 'longanqian'
   ) {
     this.apiKey = apiKey;
     this.systemPrompt = systemPrompt;
     this.worldbookEngine = worldbookEngine;
     this.onMessageCallback = onMessage;
     this.onErrorCallback = onError;
+    this.voice = voice;
   }
 
   async connect() {
@@ -84,7 +88,7 @@ export class QwenRealtimeClient {
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
-        voice: "longanqian",
+        voice: this.voice,
         instructions: this.systemPrompt,
         turn_detection: {
           type: "server_vad",
