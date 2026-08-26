@@ -1,8 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useAppStore } from '../store';
 import { WorldbookEngine } from '../utils/worldbook_engine';
-import { QwenRealtimeClient } from '../api/qwen_realtime';
-import { XAIRealtimeClient } from '../api/xai_realtime';
+import { createRealtimeClient } from '../api/client_factory';
 import type { RealtimeVoiceClient } from '../api/types';
 import { Mic, MicOff, Menu, X } from 'lucide-react';
 import AudioVisualizer from './AudioVisualizer';
@@ -10,7 +9,7 @@ import LibrarySidebar from './LibrarySidebar';
 import { assemblePrompt } from '../utils/preset_engine';
 
 export default function ChatLayout() {
-  const { apiKey, xaiApiKey, voiceProvider, qwenVoice, xaiVoice, activeCharacter, activeWorldbook, messages, addMessage, isConnected, setIsConnected } = useAppStore();
+  const { voiceProvider, providerConfigs, activeCharacter, activeWorldbook, messages, addMessage, isConnected, setIsConnected } = useAppStore();
   const [client, setClient] = useState<RealtimeVoiceClient | null>(null);
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -28,8 +27,10 @@ export default function ChatLayout() {
       setClient(null);
       setIsConnected(false);
     } else {
-      const activeKey = voiceProvider === 'qwen' ? apiKey : xaiApiKey;
-      if (!activeKey) return alert(`请先在设置中填写 ${voiceProvider === 'qwen' ? 'DashScope' : 'xAI'} API Key`);
+      const activeConfig = providerConfigs[voiceProvider] || { apiKey: '', voice: '' };
+      if (!activeConfig.apiKey?.trim()) {
+        return alert(`请先在设置中填写 ${voiceProvider.toUpperCase()} API Key`);
+      }
       
       let wbEngine: WorldbookEngine | undefined = undefined;
       let constantLore: string[] = [];
@@ -82,9 +83,14 @@ export default function ChatLayout() {
         setIsConnected(false);
       };
 
-      const newClient: RealtimeVoiceClient = voiceProvider === 'qwen'
-        ? new QwenRealtimeClient(apiKey, systemPrompt, wbEngine, onMessage, onError, qwenVoice)
-        : new XAIRealtimeClient(xaiApiKey, systemPrompt, wbEngine, onMessage, onError, xaiVoice);
+      const newClient = createRealtimeClient({
+        provider: voiceProvider,
+        config: activeConfig,
+        systemPrompt,
+        worldbookEngine: wbEngine,
+        onMessage,
+        onError
+      });
 
       try {
         await newClient.connect();

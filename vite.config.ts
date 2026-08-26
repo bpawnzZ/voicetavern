@@ -32,6 +32,54 @@ export default defineConfig({
             }
           });
         }
+      },
+      '/openai-ws': {
+        target: 'wss://api.openai.com',
+        ws: true,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReqWs', (proxyReq, req) => {
+            const url = new URL(req.url || '', 'http://localhost');
+            const apiKey = url.searchParams.get('api_key');
+            if (apiKey) {
+              proxyReq.setHeader('Authorization', `Bearer ${apiKey}`);
+              proxyReq.setHeader('OpenAI-Beta', 'realtime=v1');
+            }
+          });
+        }
+      },
+      '/gemini-ws': {
+        target: 'wss://generativelanguage.googleapis.com',
+        ws: true,
+        changeOrigin: true
+      },
+      '/volc-ws': {
+        target: 'wss://openspeech.bytedance.com',
+        ws: true,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReqWs', (proxyReq, req) => {
+            const url = new URL(req.url || '', 'http://localhost');
+            const apiKey = url.searchParams.get('api_key');
+            if (apiKey) {
+              proxyReq.setHeader('Authorization', `Bearer; ${apiKey}`);
+            }
+          });
+        }
+      },
+      '/glm-ws': {
+        target: 'wss://open.bigmodel.cn',
+        ws: true,
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyReqWs', (proxyReq, req) => {
+            const url = new URL(req.url || '', 'http://localhost');
+            const apiKey = url.searchParams.get('api_key');
+            if (apiKey) {
+              proxyReq.setHeader('Authorization', `Bearer ${apiKey}`);
+            }
+          });
+        }
       }
     }
   }

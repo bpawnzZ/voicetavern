@@ -4,6 +4,8 @@ import type { Worldbook } from '../utils/worldbook_engine';
 import { getCharacters, getWorldbooks, saveCharacter, deleteCharacter, saveWorldbook, deleteWorldbook, getOrder, saveOrder, getSessions, saveSession, deleteSession } from '../utils/storage';
 import type { ChatSession } from '../utils/storage';
 
+import type { VoiceProvider, ProviderConfig } from '../api/types';
+
 interface AppState {
   apiKey: string;
   setApiKey: (key: string) => void;
@@ -14,15 +16,17 @@ interface AppState {
   userName: string;
   setUserName: (name: string) => void;
 
-  voiceProvider: 'qwen' | 'xai';
-  setVoiceProvider: (provider: 'qwen' | 'xai') => void;
+  voiceProvider: VoiceProvider;
+  setVoiceProvider: (provider: VoiceProvider) => void;
 
+  providerConfigs: Record<VoiceProvider, ProviderConfig>;
+  updateProviderConfig: (provider: VoiceProvider, config: Partial<ProviderConfig>) => void;
+
+  // Legacy key getters/setters for backwards compatibility
   xaiApiKey: string;
   setXaiApiKey: (key: string) => void;
-
   qwenVoice: string;
   setQwenVoice: (voice: string) => void;
-
   xaiVoice: string;
   setXaiVoice: (voice: string) => void;
 
@@ -66,14 +70,37 @@ interface AppState {
   renameSession: (id: string, newTitle: string) => Promise<void>;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+const loadSavedConfigs = (): Record<VoiceProvider, ProviderConfig> => {
+  const saved = localStorage.getItem('vt_provider_configs');
+  const defaults: Record<VoiceProvider, ProviderConfig> = {
+    qwen: { apiKey: localStorage.getItem('dashscope_api_key') || '', voice: localStorage.getItem('vt_qwen_voice') || 'longanqian' },
+    xai: { apiKey: localStorage.getItem('xai_api_key') || '', voice: localStorage.getItem('vt_xai_voice') || 'eve' },
+    openai: { apiKey: '', voice: 'alloy', model: 'gpt-4o-realtime-preview' },
+    gemini: { apiKey: '', voice: 'Puck', model: 'gemini-2.0-flash-exp' },
+    volcengine: { apiKey: '', appId: '', voice: 'cancan' },
+    glm: { apiKey: '', voice: 'cogvoice-female' },
+  };
+
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      return { ...defaults, ...parsed };
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return defaults;
+};
+
+export const useAppStore = create<AppState>((set, get) => ({
   apiKey: localStorage.getItem('dashscope_api_key') || '',
   setApiKey: (key) => {
     localStorage.setItem('dashscope_api_key', key);
+    get().updateProviderConfig('qwen', { apiKey: key });
     set({ apiKey: key });
   },
 
-  useVoicePrompt: localStorage.getItem('vt_use_voice_prompt') !== 'false', // Default to true
+  useVoicePrompt: localStorage.getItem('vt_use_voice_prompt') !== 'false',
   setUseVoicePrompt: (v) => {
     localStorage.setItem('vt_use_voice_prompt', v ? 'true' : 'false');
     set({ useVoicePrompt: v });
@@ -85,27 +112,43 @@ export const useAppStore = create<AppState>((set) => ({
     set({ userName: name });
   },
 
-  voiceProvider: (localStorage.getItem('vt_voice_provider') as 'qwen' | 'xai') || 'qwen',
+  voiceProvider: (localStorage.getItem('vt_voice_provider') as VoiceProvider) || 'qwen',
   setVoiceProvider: (provider) => {
     localStorage.setItem('vt_voice_provider', provider);
     set({ voiceProvider: provider });
   },
 
+  providerConfigs: loadSavedConfigs(),
+  updateProviderConfig: (provider, config) => set((state) => {
+    const updated = {
+      ...state.providerConfigs,
+      [provider]: {
+        ...state.providerConfigs[provider],
+        ...config
+      }
+    };
+    localStorage.setItem('vt_provider_configs', JSON.stringify(updated));
+    return { providerConfigs: updated };
+  }),
+
   xaiApiKey: localStorage.getItem('xai_api_key') || '',
   setXaiApiKey: (key) => {
     localStorage.setItem('xai_api_key', key);
+    get().updateProviderConfig('xai', { apiKey: key });
     set({ xaiApiKey: key });
   },
 
   qwenVoice: localStorage.getItem('vt_qwen_voice') || 'longanqian',
   setQwenVoice: (voice) => {
     localStorage.setItem('vt_qwen_voice', voice);
+    get().updateProviderConfig('qwen', { voice });
     set({ qwenVoice: voice });
   },
 
   xaiVoice: localStorage.getItem('vt_xai_voice') || 'eve',
   setXaiVoice: (voice) => {
     localStorage.setItem('vt_xai_voice', voice);
+    get().updateProviderConfig('xai', { voice });
     set({ xaiVoice: voice });
   },
 

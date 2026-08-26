@@ -2,42 +2,67 @@ import { useEffect, useState } from 'react';
 import { useAppStore } from './store';
 import ChatLayout from './components/ChatLayout';
 import { Settings, X, ShieldAlert, MessageSquare } from 'lucide-react';
-import { QWEN_VOICES, XAI_VOICES } from './api/types';
-import type { VoiceProvider } from './api/types';
+import { 
+  PROVIDERS, 
+  QWEN_VOICES, 
+  XAI_VOICES, 
+  OPENAI_VOICES, 
+  GEMINI_VOICES, 
+  VOLCENGINE_VOICES, 
+  GLM_VOICES 
+} from './api/types';
+import type { VoiceProvider, ProviderConfig } from './api/types';
 
-function App() {
+export default function App() {
   const { 
-    apiKey, setApiKey, 
-    xaiApiKey, setXaiApiKey,
     voiceProvider, setVoiceProvider,
-    qwenVoice, setQwenVoice,
-    xaiVoice, setXaiVoice,
+    providerConfigs, updateProviderConfig,
     useVoicePrompt, setUseVoicePrompt, 
     userName, setUserName 
   } = useAppStore();
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [tempKey, setTempKey] = useState(apiKey);
-  const [tempXaiKey, setTempXaiKey] = useState(xaiApiKey);
-  const [tempProvider, setTempProvider] = useState<VoiceProvider>(voiceProvider);
-  const [tempQwenVoice, setTempQwenVoice] = useState(qwenVoice);
-  const [tempXaiVoice, setTempXaiVoice] = useState(xaiVoice);
+  const [selectedProvider, setSelectedProvider] = useState<VoiceProvider>(voiceProvider);
+  const [tempConfigs, setTempConfigs] = useState<Record<VoiceProvider, ProviderConfig>>({ ...providerConfigs });
   const [tempVoicePrompt, setTempVoicePrompt] = useState(useVoicePrompt);
   const [tempUserName, setTempUserName] = useState(userName);
 
+  const activeProviderConfig = tempConfigs[selectedProvider] || { apiKey: '', voice: '' };
+
   useEffect(() => {
     useAppStore.getState().loadLibrary();
-    if (!apiKey && !xaiApiKey) {
+    const hasAnyKey = Object.values(providerConfigs).some(c => c.apiKey?.trim().length > 0);
+    if (!hasAnyKey) {
       setIsSettingsOpen(true);
     }
-  }, [apiKey, xaiApiKey]);
+  }, [providerConfigs]);
+
+  const handleConfigChange = (field: keyof ProviderConfig, value: string) => {
+    setTempConfigs(prev => ({
+      ...prev,
+      [selectedProvider]: {
+        ...prev[selectedProvider],
+        [field]: value
+      }
+    }));
+  };
+
+  const getVoiceOptions = (p: VoiceProvider) => {
+    switch (p) {
+      case 'qwen': return QWEN_VOICES;
+      case 'xai': return XAI_VOICES;
+      case 'openai': return OPENAI_VOICES;
+      case 'gemini': return GEMINI_VOICES;
+      case 'volcengine': return VOLCENGINE_VOICES;
+      case 'glm': return GLM_VOICES;
+    }
+  };
 
   const saveSettings = () => {
-    setApiKey(tempKey);
-    setXaiApiKey(tempXaiKey);
-    setVoiceProvider(tempProvider);
-    setQwenVoice(tempQwenVoice);
-    setXaiVoice(tempXaiVoice);
+    setVoiceProvider(selectedProvider);
+    Object.keys(tempConfigs).forEach((p) => {
+      updateProviderConfig(p as VoiceProvider, tempConfigs[p as VoiceProvider]);
+    });
     setUseVoicePrompt(tempVoicePrompt);
     setUserName(tempUserName);
     setIsSettingsOpen(false);
@@ -64,7 +89,11 @@ function App() {
             新建聊天
           </button>
           <button 
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={() => {
+              setTempConfigs({ ...useAppStore.getState().providerConfigs });
+              setSelectedProvider(useAppStore.getState().voiceProvider);
+              setIsSettingsOpen(true);
+            }}
             className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-full group transition-colors"
           >
             <Settings size={20} className="text-slate-600 group-hover:text-slate-900 group-hover:rotate-45 transition-all duration-500" />
@@ -79,121 +108,100 @@ function App() {
       {/* 设置面板 (模态框) */}
       {isSettingsOpen && (
         <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all animate-in fade-in duration-200">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-xl p-8 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-slate-800">系统设置</h2>
-              {(apiKey || xaiApiKey) && (
-                <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-full hover:bg-slate-100">
-                  <X size={24} />
-                </button>
-              )}
+              <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-full hover:bg-slate-100">
+                <X size={24} />
+              </button>
             </div>
             
             <div className="space-y-6">
-              {/* 语音提供商选择 */}
+              {/* 6 大提供商选择网格 */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  实时语音服务提供商
+                  实时语音服务提供商 (6 大提供商)
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setTempProvider('qwen')}
-                    className={`py-3 px-4 rounded-xl border text-sm font-bold flex flex-col items-center transition-all ${
-                      tempProvider === 'qwen'
-                        ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-sm'
-                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>阿里云通义千问</span>
-                    <span className="text-[11px] font-normal text-slate-400 mt-0.5">Qwen Realtime</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTempProvider('xai')}
-                    className={`py-3 px-4 rounded-xl border text-sm font-bold flex flex-col items-center transition-all ${
-                      tempProvider === 'xai'
-                        ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-sm'
-                        : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>xAI Grok Voice</span>
-                    <span className="text-[11px] font-normal text-slate-400 mt-0.5">Speech-to-Speech</span>
-                  </button>
+                <div className="grid grid-cols-3 gap-2.5">
+                  {PROVIDERS.map((p) => {
+                    const isSelected = selectedProvider === p.id;
+                    const hasKey = tempConfigs[p.id]?.apiKey?.trim().length > 0;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedProvider(p.id)}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex flex-col items-center justify-center text-center transition-all relative ${
+                          isSelected
+                            ? 'border-teal-500 bg-teal-50 text-teal-700 shadow-sm ring-2 ring-teal-400/20'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span className="truncate w-full font-bold">{p.name}</span>
+                        <span className="text-[10px] font-normal text-slate-400 truncate w-full mt-0.5">{p.subName}</span>
+                        {hasKey && (
+                          <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* API Keys */}
-              {tempProvider === 'qwen' ? (
-                <div>
-                  <label className="flex items-center justify-between text-sm font-medium text-slate-700 mb-2">
-                    <span>Dashscope API 密钥</span>
-                    <a href="https://platform.qianwenai.com/home/api-keys" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 hover:underline flex items-center text-xs">
-                      <span>获取 DashScope Key</span>
-                    </a>
-                  </label>
-                  <input 
-                    type="password"
-                    value={tempKey}
-                    onChange={(e) => setTempKey(e.target.value)}
-                    placeholder="sk-..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all placeholder:text-slate-400"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="flex items-center justify-between text-sm font-medium text-slate-700 mb-2">
-                    <span>xAI API 密钥</span>
-                    <a href="https://console.x.ai/" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-700 hover:underline flex items-center text-xs">
-                      <span>获取 xAI API Key</span>
-                    </a>
-                  </label>
-                  <input 
-                    type="password"
-                    value={tempXaiKey}
-                    onChange={(e) => setTempXaiKey(e.target.value)}
-                    placeholder="xai-..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all placeholder:text-slate-400"
-                  />
-                </div>
-              )}
+              {/* 动态展示选中提供商的 API Key */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 space-y-4">
+                <h3 className="text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 flex items-center justify-between">
+                  <span>{PROVIDERS.find(p => p.id === selectedProvider)?.name} 配置</span>
+                  <span className="text-xs font-normal text-teal-600 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
+                    {PROVIDERS.find(p => p.id === selectedProvider)?.subName}
+                  </span>
+                </h3>
 
-              {/* 音色选择 */}
-              {tempProvider === 'qwen' ? (
+                {PROVIDERS.find(p => p.id === selectedProvider)?.hasAppId && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      App ID (应用 ID)
+                    </label>
+                    <input 
+                      type="text"
+                      value={activeProviderConfig.appId || ''}
+                      onChange={(e) => handleConfigChange('appId', e.target.value)}
+                      placeholder="火山引擎 App ID..."
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Qwen 默认音色
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    API Key (密钥)
+                  </label>
+                  <input 
+                    type="password"
+                    value={activeProviderConfig.apiKey || ''}
+                    onChange={(e) => handleConfigChange('apiKey', e.target.value)}
+                    placeholder={`${selectedProvider} API Key...`}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">
+                    默认音色 (Voice)
                   </label>
                   <select
-                    value={tempQwenVoice}
-                    onChange={(e) => setTempQwenVoice(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all"
+                    value={activeProviderConfig.voice || getVoiceOptions(selectedProvider)[0]?.id}
+                    onChange={(e) => handleConfigChange('voice', e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                   >
-                    {QWEN_VOICES.map((v) => (
+                    {getVoiceOptions(selectedProvider).map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name}
                       </option>
                     ))}
                   </select>
                 </div>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    xAI Grok Voice 默认音色
-                  </label>
-                  <select
-                    value={tempXaiVoice}
-                    onChange={(e) => setTempXaiVoice(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all"
-                  >
-                    {XAI_VOICES.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              </div>
 
               <div>
                 <label className="flex items-center justify-between text-sm font-medium text-slate-700 mb-2">
@@ -240,7 +248,7 @@ function App() {
             <div className="mt-8 flex justify-end">
               <button 
                 onClick={saveSettings}
-                disabled={tempProvider === 'qwen' ? !tempKey : !tempXaiKey}
+                disabled={!activeProviderConfig.apiKey?.trim()}
                 className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 disabled:from-gray-300 disabled:to-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white px-8 py-2.5 rounded-xl font-semibold shadow-lg shadow-teal-500/20 transition-all active:scale-95"
               >
                 保存并应用
@@ -252,5 +260,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
