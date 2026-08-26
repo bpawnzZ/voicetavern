@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Rust
@@ -40,7 +40,7 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
 
       - name: Install npm dependencies
         run: npm ci
@@ -53,19 +53,21 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'VoiceTavern ${{ github.ref_name }}'
           releaseBody: 'See the assets below to download VoiceTavern for your platform.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
 
   build-android:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Setup Java
@@ -93,25 +95,32 @@ jobs:
         env:
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/26.1.10909125
         run: |
-          npx tauri android init --skip-targets-install || true
+          npx tauri android init
           npx tauri android build --apk
 
       - name: Upload Android APK
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: voicetavern-android-apk
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
+          files: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
 
   build-ios-unsigned:
     runs-on: macos-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
       - name: Install Rust & iOS Targets
         uses: dtolnay/rust-toolchain@stable
@@ -123,17 +132,19 @@ jobs:
 
       - name: Build Unsigned iOS App
         run: |
-          npx tauri ios init || true
+          npx tauri ios init
           npx tauri ios build --no-bundle
 
       - name: Package Unsigned IPA
         run: |
           mkdir -p build/Payload
-          cp -r src-tauri/gen/apple/build/arm64/release/VoiceTavern.app build/Payload/ || true
-          cd build && zip -r ../VoiceTavern_unsigned.ipa Payload/ || true
+          find src-tauri/gen/apple/build -name "*.app" -exec cp -r {} build/Payload/ \;
+          cd build && zip -r ../VoiceTavern_unsigned.ipa Payload/
 
       - name: Upload iOS IPA
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: voicetavern-ios-unsigned-ipa
-          path: VoiceTavern_unsigned.ipa
+          files: VoiceTavern_unsigned.ipa
