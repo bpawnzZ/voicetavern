@@ -179,31 +179,34 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
 
   private stopAudio() {
     if (this.processorNode) {
-      this.processorNode.disconnect();
+      try { this.processorNode.disconnect(); } catch (e) {}
       this.processorNode = null;
     }
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      try {
+        this.mediaStream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+      } catch (e) {}
       this.mediaStream = null;
     }
-    if (this.audioContext) {
-      this.audioContext.close();
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try { this.audioContext.close(); } catch (e) {}
       this.audioContext = null;
     }
+    this.nextAudioTime = 0;
   }
 
   private playAudioDelta(base64: string) {
     if (!this.audioContext) return;
     
-    // Qwen outputs 24kHz PCM16 by default. But AudioContext might be 16kHz.
-    // The browser will resample if we create an AudioBuffer with 24000 sample rate.
     const binary = atob(base64);
     const len = binary.length;
     const pcmData = new Int16Array(len / 2);
     
     for (let i = 0; i < len; i += 2) {
       pcmData[i/2] = binary.charCodeAt(i) | (binary.charCodeAt(i+1) << 8);
-      // Handle signed
       if (pcmData[i/2] & 0x8000) {
         pcmData[i/2] |= 0xFFFF0000;
       }
@@ -219,7 +222,6 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
     source.buffer = audioBuffer;
     source.connect(this.audioContext.destination);
     
-    // Schedule continuous playback
     const currentTime = this.audioContext.currentTime;
     if (this.nextAudioTime < currentTime) {
       this.nextAudioTime = currentTime + 0.05;
@@ -248,8 +250,11 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
   }
 
   public disconnect() {
+    this.stopAudio();
     if (this.ws) {
-      this.ws.close();
+      const ws = this.ws;
+      this.ws = null;
+      ws.close();
     }
   }
 }

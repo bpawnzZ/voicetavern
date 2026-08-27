@@ -121,17 +121,23 @@ export class VolcengineRealtimeClient implements RealtimeVoiceClient {
 
   private stopAudio() {
     if (this.processorNode) {
-      this.processorNode.disconnect();
+      try { this.processorNode.disconnect(); } catch (e) {}
       this.processorNode = null;
     }
     if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach(track => track.stop());
+      try {
+        this.mediaStream.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+      } catch (e) {}
       this.mediaStream = null;
     }
-    if (this.audioContext) {
-      this.audioContext.close();
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      try { this.audioContext.close(); } catch (e) {}
       this.audioContext = null;
     }
+    this.nextAudioTime = 0;
   }
 
   private playAudioDelta(base64: string) {
@@ -186,8 +192,11 @@ export class VolcengineRealtimeClient implements RealtimeVoiceClient {
   }
 
   public disconnect() {
+    this.stopAudio();
     if (this.ws) {
-      this.ws.close();
+      const ws = this.ws;
+      this.ws = null;
+      ws.close();
     }
   }
 }

@@ -38,15 +38,11 @@
     "macOS": {
       "frameworks": [],
       "minimumSystemVersion": "10.15",
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "VoiceTavern requires microphone access for real-time voice chat."
-      },
+      "infoPlist": "Info.plist",
       "entitlements": "entitlements.mac.plist"
     },
     "iOS": {
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "VoiceTavern requires microphone access for real-time voice chat."
-      }
+      "infoPlist": "Info.plist"
     },
     "category": "Entertainment",
     "shortDescription": "Real-time voice chat frontend for SillyTavern character cards",

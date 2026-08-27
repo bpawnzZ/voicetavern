@@ -10,7 +10,7 @@ import { assemblePrompt } from '../utils/preset_engine';
 
 export default function ChatLayout() {
   const { voiceProvider, providerConfigs, activeCharacter, activeWorldbook, messages, addMessage, isConnected, setIsConnected } = useAppStore();
-  const [client, setClient] = useState<RealtimeVoiceClient | null>(null);
+  const clientRef = useRef<RealtimeVoiceClient | null>(null);
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -21,17 +21,31 @@ export default function ChatLayout() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // 组件卸载或重置时，彻底销毁任何残留的语音连接与麦克风
+  useEffect(() => {
+    return () => {
+      if (clientRef.current) {
+        console.log('[ChatLayout] Cleaning up active voice client on unmount');
+        clientRef.current.disconnect();
+        clientRef.current = null;
+      }
+    };
+  }, []);
+
   const toggleConnection = async () => {
-    if (isConnected && client) {
-      client.disconnect();
-      setClient(null);
+    if (isConnected || clientRef.current) {
+      console.log('[ChatLayout] Disconnecting current client...');
+      if (clientRef.current) {
+        clientRef.current.disconnect();
+        clientRef.current = null;
+      }
       setIsConnected(false);
     } else {
       const activeConfig = providerConfigs[voiceProvider] || { apiKey: '', voice: '' };
       if (!activeConfig.apiKey?.trim()) {
         return alert(`请先在设置中填写 ${voiceProvider.toUpperCase()} API Key`);
       }
-      
+
       let wbEngine: WorldbookEngine | undefined = undefined;
       let constantLore: string[] = [];
       if (activeWorldbook) {
@@ -80,6 +94,10 @@ export default function ChatLayout() {
       const onError = (err: string) => {
         console.error('API Error:', err);
         alert(`连接错误: ${err}`);
+        if (clientRef.current) {
+          clientRef.current.disconnect();
+          clientRef.current = null;
+        }
         setIsConnected(false);
       };
 
@@ -93,11 +111,16 @@ export default function ChatLayout() {
       });
 
       try {
+        clientRef.current = newClient;
         await newClient.connect();
-        setClient(newClient);
         setIsConnected(true);
       } catch (e) {
-        console.error(e);
+        console.error('Connect failed:', e);
+        if (clientRef.current) {
+          clientRef.current.disconnect();
+          clientRef.current = null;
+        }
+        setIsConnected(false);
         alert('连接失败');
       }
     }

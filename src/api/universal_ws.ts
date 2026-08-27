@@ -18,6 +18,7 @@ export class UniversalWebSocket {
   private browserWs?: WebSocket;
   private tauriWs?: TauriWebSocket;
   private isApp: boolean;
+  private isClosedManually: boolean = false;
 
   constructor(
     url: string,
@@ -29,6 +30,7 @@ export class UniversalWebSocket {
   }
 
   public async connect(): Promise<void> {
+    this.isClosedManually = false;
     if (this.isApp) {
       try {
         console.log('[UniversalWebSocket] Connecting via Tauri Native Plugin to:', this.url, 'with headers:', this.options?.headers);
@@ -40,6 +42,7 @@ export class UniversalWebSocket {
         if (this.onopen) this.onopen();
 
         this.tauriWs.addListener((msg) => {
+          if (this.isClosedManually) return;
           if (msg.type === 'Text' && typeof msg.data === 'string') {
             if (this.onmessage) this.onmessage({ data: msg.data });
           } else if (msg.type === 'Close') {
@@ -67,14 +70,14 @@ export class UniversalWebSocket {
           if (this.onopen) this.onopen();
         };
         this.browserWs.onmessage = (event) => {
-          if (this.onmessage) this.onmessage(event);
+          if (this.onmessage && !this.isClosedManually) this.onmessage(event);
         };
         this.browserWs.onerror = (err) => {
-          if (this.onerror) this.onerror(err);
+          if (this.onerror && !this.isClosedManually) this.onerror(err);
         };
         this.browserWs.onclose = (event) => {
           this.readyState = 3;
-          if (this.onclose) this.onclose(event);
+          if (this.onclose && !this.isClosedManually) this.onclose(event);
         };
       } catch (err) {
         console.error('[UniversalWebSocket] Browser connect failed:', err);
@@ -85,6 +88,7 @@ export class UniversalWebSocket {
   }
 
   public send(data: string) {
+    if (this.isClosedManually || this.readyState !== 1) return;
     if (this.isApp && this.tauriWs) {
       this.tauriWs.send(data).catch((e) => {
         console.error('[UniversalWebSocket] Tauri send error:', e);
@@ -95,13 +99,18 @@ export class UniversalWebSocket {
   }
 
   public close() {
+    this.isClosedManually = true;
     this.readyState = 2;
     if (this.isApp && this.tauriWs) {
       this.tauriWs.disconnect().catch(() => {});
-      this.readyState = 3;
+      this.tauriWs = undefined;
     } else if (this.browserWs) {
       this.browserWs.close();
-      this.readyState = 3;
+      this.browserWs = undefined;
+    }
+    this.readyState = 3;
+    if (this.onclose) {
+      this.onclose({ code: 1000, reason: 'Client Disconnected' });
     }
   }
 }
