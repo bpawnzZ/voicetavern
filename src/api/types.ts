@@ -30,9 +30,20 @@ export const PROVIDERS: ProviderInfo[] = [
 
 export const QWEN_VOICES = [
   { id: 'longanqian', name: '龙安浅 (标准女声)' },
-  { id: 'longxiaochun', name: '龙小春 (甜美女声)' },
-  { id: 'longyue', name: '龙悦 (御姐女声)' },
-  { id: 'longba', name: '龙霸 (沉稳男声)' },
+  { id: 'longanlingxin', name: '龙安灵心 (灵动女声)' },
+  { id: 'longanlufeng', name: '龙安鲁风 (沉稳男声)' },
+  { id: 'longanlingxi', name: '龙安灵犀 (温柔女声)' },
+  { id: 'longanxiaoxin', name: '龙安小欣 (活泼女声)' },
+  { id: 'longanfengyue', name: '龙安风悦 (御姐女声)' },
+  { id: 'longanyuanfei', name: '龙安远飞 (阳光男声)' },
+  { id: 'longanhuan_v3.6', name: '龙安欢 (欢快女声)' },
+  { id: 'longjielidou_v3.6', name: '龙果粒豆 (萌系童声)' },
+  { id: 'longpaopao_v3.6', name: '龙泡泡 (可爱童声)' },
+  { id: 'longhuohuo_v3.6', name: '龙火火 (热情男声)' },
+  { id: 'longchuanshu_v3.6', name: '龙川书 (沉稳大叔)' },
+  { id: 'loongmary', name: 'Mary (英文女声)' },
+  { id: 'loongeva_v3.6', name: 'Eva (英文女声)' },
+  { id: 'loongjohn', name: 'John (英文男声)' },
 ];
 
 export const XAI_VOICES = [

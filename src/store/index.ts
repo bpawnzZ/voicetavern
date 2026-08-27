@@ -70,6 +70,8 @@ interface AppState {
   renameSession: (id: string, newTitle: string) => Promise<void>;
 }
 
+import { QWEN_VOICES } from '../api/types';
+
 const loadSavedConfigs = (): Record<VoiceProvider, ProviderConfig> => {
   const saved = localStorage.getItem('vt_provider_configs');
   const defaults: Record<VoiceProvider, ProviderConfig> = {
@@ -84,7 +86,11 @@ const loadSavedConfigs = (): Record<VoiceProvider, ProviderConfig> => {
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      return { ...defaults, ...parsed };
+      const configs = { ...defaults, ...parsed };
+      if (!QWEN_VOICES.some(v => v.id === configs.qwen.voice)) {
+        configs.qwen.voice = 'longanqian';
+      }
+      return configs;
     } catch (e) {
       console.error(e);
     }
