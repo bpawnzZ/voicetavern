@@ -1,9 +1,10 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
-import { getWebSocketUrl } from './utils';
+import { getWebSocketConfig } from './utils';
+import { UniversalWebSocket } from './universal_ws';
 
 export class GeminiRealtimeClient implements RealtimeVoiceClient {
-  private ws: WebSocket | null = null;
+  private ws: UniversalWebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private processorNode: ScriptProcessorNode | null = null;
@@ -34,9 +35,9 @@ export class GeminiRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = getWebSocketUrl('gemini', { apiKey: this.apiKey });
+    const config = getWebSocketConfig('gemini', { apiKey: this.apiKey, model: this.model });
     
-    this.ws = new WebSocket(wsUrl);
+    this.ws = new UniversalWebSocket(config.url, { headers: config.headers });
 
     this.ws.onopen = () => {
       console.log('[WS OPEN] Gemini Live Connected');
@@ -62,6 +63,7 @@ export class GeminiRealtimeClient implements RealtimeVoiceClient {
       this.stopAudio();
     };
 
+    await this.ws.connect();
     await this.startAudioRecording();
   }
 
@@ -121,7 +123,7 @@ export class GeminiRealtimeClient implements RealtimeVoiceClient {
       const inputData = e.inputBuffer.getChannelData(0);
       const pcm16 = this.floatTo16BitPCM(inputData);
       
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === 1) {
         this.ws.send(JSON.stringify({
           realtimeInput: {
             mediaChunks: [

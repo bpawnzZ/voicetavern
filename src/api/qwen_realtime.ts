@@ -1,9 +1,10 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
-import { getWebSocketUrl } from './utils';
+import { getWebSocketConfig } from './utils';
+import { UniversalWebSocket } from './universal_ws';
 
 export class QwenRealtimeClient implements RealtimeVoiceClient {
-  private ws: WebSocket | null = null;
+  private ws: UniversalWebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private processorNode: ScriptProcessorNode | null = null;
@@ -33,9 +34,9 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = getWebSocketUrl('qwen', { apiKey: this.apiKey, model: 'qwen-audio-3.0-realtime-plus' });
+    const config = getWebSocketConfig('qwen', { apiKey: this.apiKey, model: 'qwen-audio-3.0-realtime-plus' });
     
-    this.ws = new WebSocket(wsUrl);
+    this.ws = new UniversalWebSocket(config.url, { headers: config.headers });
 
     this.ws.onopen = () => {
       console.log('[WS OPEN] Qwen Realtime Connected');
@@ -56,10 +57,11 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
     };
 
     this.ws.onclose = (event) => {
-      console.warn(`[WS CLOSE] Qwen Realtime Disconnected. Code: ${event.code}, Reason: ${event.reason}, WasClean: ${event.wasClean}`);
+      console.warn(`[WS CLOSE] Qwen Realtime Disconnected. Code: ${event.code}, Reason: ${event.reason}`);
       this.stopAudio();
     };
 
+    await this.ws.connect();
     await this.startAudioRecording();
   }
 
@@ -166,7 +168,7 @@ export class QwenRealtimeClient implements RealtimeVoiceClient {
       const inputData = e.inputBuffer.getChannelData(0);
       const pcm16 = this.floatTo16BitPCM(inputData);
       
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === 1) {
         this.ws.send(JSON.stringify({
           type: "input_audio_buffer.append",
           audio: this.arrayBufferToBase64(pcm16)

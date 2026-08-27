@@ -1,9 +1,10 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
-import { getWebSocketUrl } from './utils';
+import { getWebSocketConfig } from './utils';
+import { UniversalWebSocket } from './universal_ws';
 
 export class GLMRealtimeClient implements RealtimeVoiceClient {
-  private ws: WebSocket | null = null;
+  private ws: UniversalWebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private processorNode: ScriptProcessorNode | null = null;
@@ -33,9 +34,9 @@ export class GLMRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = getWebSocketUrl('glm', { apiKey: this.apiKey, model: 'glm-realtime' });
+    const config = getWebSocketConfig('glm', { apiKey: this.apiKey, model: 'glm-realtime' });
     
-    this.ws = new WebSocket(wsUrl);
+    this.ws = new UniversalWebSocket(config.url, { headers: config.headers });
 
     this.ws.onopen = () => {
       console.log('[WS OPEN] Zhipu GLM-Realtime Connected');
@@ -61,6 +62,7 @@ export class GLMRealtimeClient implements RealtimeVoiceClient {
       this.stopAudio();
     };
 
+    await this.ws.connect();
     await this.startAudioRecording();
   }
 
@@ -129,7 +131,7 @@ export class GLMRealtimeClient implements RealtimeVoiceClient {
       const inputData = e.inputBuffer.getChannelData(0);
       const pcm16 = this.floatTo16BitPCM(inputData);
       
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === 1) {
         this.ws.send(JSON.stringify({
           type: "input_audio_buffer.append",
           audio: this.arrayBufferToBase64(pcm16)

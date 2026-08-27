@@ -1,9 +1,10 @@
 import { WorldbookEngine } from '../utils/worldbook_engine';
 import type { RealtimeVoiceClient } from './types';
-import { getWebSocketUrl } from './utils';
+import { getWebSocketConfig } from './utils';
+import { UniversalWebSocket } from './universal_ws';
 
 export class XAIRealtimeClient implements RealtimeVoiceClient {
-  private ws: WebSocket | null = null;
+  private ws: UniversalWebSocket | null = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private processorNode: ScriptProcessorNode | null = null;
@@ -33,12 +34,12 @@ export class XAIRealtimeClient implements RealtimeVoiceClient {
   }
 
   async connect() {
-    const wsUrl = getWebSocketUrl('xai', { apiKey: this.apiKey, model: 'grok-voice-latest' });
+    const config = getWebSocketConfig('xai', { apiKey: this.apiKey, model: 'grok-voice-latest' });
     
-    this.ws = new WebSocket(wsUrl);
+    this.ws = new UniversalWebSocket(config.url, { headers: config.headers });
 
     this.ws.onopen = () => {
-      console.log('[WS OPEN] xAI Grok Voice Realtime Connected');
+      console.log('[WS OPEN] xAI Grok Voice Connected');
       this.initSession();
     };
 
@@ -60,6 +61,7 @@ export class XAIRealtimeClient implements RealtimeVoiceClient {
       this.stopAudio();
     };
 
+    await this.ws.connect();
     await this.startAudioRecording();
   }
 
@@ -165,7 +167,7 @@ export class XAIRealtimeClient implements RealtimeVoiceClient {
       const inputData = e.inputBuffer.getChannelData(0);
       const pcm16 = this.floatTo16BitPCM(inputData);
       
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (this.ws && this.ws.readyState === 1) {
         this.ws.send(JSON.stringify({
           type: "input_audio_buffer.append",
           audio: this.arrayBufferToBase64(pcm16)

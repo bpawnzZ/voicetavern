@@ -35,6 +35,19 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "VoiceTavern requires microphone access for real-time voice chat."
+      },
+      "entitlements": "entitlements.mac.plist"
+    },
+    "iOS": {
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "VoiceTavern requires microphone access for real-time voice chat."
+      }
+    },
     "category": "Entertainment",
     "shortDescription": "Real-time voice chat frontend for SillyTavern character cards",
     "longDescription": "A modern, ultra-low latency real-time voice chat frontend for SillyTavern character cards powered by multi-provider Realtime Speech-to-Speech models."
