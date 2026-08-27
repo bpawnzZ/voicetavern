@@ -14,6 +14,7 @@ export default function ChatLayout() {
   
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -33,6 +34,7 @@ export default function ChatLayout() {
   }, []);
 
   const toggleConnection = async () => {
+    setErrorMessage(null);
     if (isConnected || clientRef.current) {
       console.log('[ChatLayout] Disconnecting current client...');
       if (clientRef.current) {
@@ -43,7 +45,9 @@ export default function ChatLayout() {
     } else {
       const activeConfig = providerConfigs[voiceProvider] || { apiKey: '', voice: '' };
       if (!activeConfig.apiKey?.trim()) {
-        return alert(`请先在设置中填写 ${voiceProvider.toUpperCase()} API Key`);
+        const err = `请先在设置中填写 ${voiceProvider.toUpperCase()} API Key`;
+        setErrorMessage(err);
+        return alert(err);
       }
 
       let wbEngine: WorldbookEngine | undefined = undefined;
@@ -93,7 +97,7 @@ export default function ChatLayout() {
 
       const onError = (err: string) => {
         console.error('API Error:', err);
-        alert(`连接错误: ${err}`);
+        setErrorMessage(typeof err === 'string' ? err : '连接异常');
         if (clientRef.current) {
           clientRef.current.disconnect();
           clientRef.current = null;
@@ -114,20 +118,36 @@ export default function ChatLayout() {
         clientRef.current = newClient;
         await newClient.connect();
         setIsConnected(true);
-      } catch (e) {
+      } catch (e: any) {
         console.error('Connect failed:', e);
+        const msg = e?.message || '连接失败，请检查网络或 API Key';
+        setErrorMessage(msg);
         if (clientRef.current) {
           clientRef.current.disconnect();
           clientRef.current = null;
         }
         setIsConnected(false);
-        alert('连接失败');
       }
     }
   };
 
   return (
     <div className="flex h-full w-full relative bg-white">
+      {/* 顶部错误提示横幅 */}
+      {errorMessage && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[90%] bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center space-x-2 text-sm font-medium overflow-hidden">
+            <span className="shrink-0 text-base">⚠️</span>
+            <span className="truncate">{errorMessage}</span>
+          </div>
+          <button 
+            onClick={() => setErrorMessage(null)}
+            className="ml-3 p-1 text-red-500 hover:text-red-800 rounded-lg hover:bg-red-100 transition-colors shrink-0"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
       
       {/* 移动端 菜单按钮 */}
       <div className="md:hidden absolute top-4 left-4 z-20">

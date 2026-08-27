@@ -32,14 +32,13 @@ export class UniversalWebSocket {
   public async connect(): Promise<void> {
     this.isClosedManually = false;
     if (this.isApp) {
+      console.log('[UniversalWebSocket] Connecting via Tauri Native Plugin to:', this.url);
       try {
-        console.log('[UniversalWebSocket] Connecting via Tauri Native Plugin to:', this.url, 'with headers:', this.options?.headers);
         this.tauriWs = await TauriWebSocket.connect(this.url, {
           headers: this.options?.headers
         });
 
         this.readyState = 1;
-        if (this.onopen) this.onopen();
 
         this.tauriWs.addListener((msg) => {
           if (this.isClosedManually) return;
@@ -50,40 +49,52 @@ export class UniversalWebSocket {
             if (this.onclose) {
               this.onclose({
                 code: msg.data?.code ?? 1000,
-                reason: msg.data?.reason ?? 'Closed'
+                reason: msg.data?.reason ?? 'Closed by server'
               });
             }
           }
         });
-      } catch (err) {
+
+        if (this.onopen) this.onopen();
+      } catch (err: any) {
         console.error('[UniversalWebSocket] Tauri connect failed:', err);
         this.readyState = 3;
-        if (this.onerror) this.onerror(err);
-        if (this.onclose) this.onclose({ code: 1006, reason: String(err) });
+        const errMsg = typeof err === 'string' ? err : err?.message || JSON.stringify(err);
+        if (this.onerror) this.onerror(errMsg);
+        if (this.onclose) this.onclose({ code: 1006, reason: errMsg });
+        throw new Error(errMsg || 'WebSocket connection failed');
       }
     } else {
       console.log('[UniversalWebSocket] Connecting via Browser WebSocket to:', this.url);
-      try {
-        this.browserWs = new WebSocket(this.url);
-        this.browserWs.onopen = () => {
-          this.readyState = 1;
-          if (this.onopen) this.onopen();
-        };
-        this.browserWs.onmessage = (event) => {
-          if (this.onmessage && !this.isClosedManually) this.onmessage(event);
-        };
-        this.browserWs.onerror = (err) => {
-          if (this.onerror && !this.isClosedManually) this.onerror(err);
-        };
-        this.browserWs.onclose = (event) => {
+      return new Promise<void>((resolve, reject) => {
+        try {
+          this.browserWs = new WebSocket(this.url);
+          this.browserWs.onopen = () => {
+            this.readyState = 1;
+            if (this.onopen) this.onopen();
+            resolve();
+          };
+          this.browserWs.onmessage = (event) => {
+            if (this.onmessage && !this.isClosedManually) this.onmessage(event);
+          };
+          this.browserWs.onerror = (err) => {
+            console.error('[UniversalWebSocket] Browser WS error:', err);
+            if (this.onerror && !this.isClosedManually) this.onerror('WebSocket Error');
+            if (this.readyState === 0) {
+              reject(new Error('WebSocket connection error'));
+            }
+          };
+          this.browserWs.onclose = (event) => {
+            this.readyState = 3;
+            if (this.onclose && !this.isClosedManually) this.onclose(event);
+          };
+        } catch (err) {
+          console.error('[UniversalWebSocket] Browser connect failed:', err);
           this.readyState = 3;
-          if (this.onclose && !this.isClosedManually) this.onclose(event);
-        };
-      } catch (err) {
-        console.error('[UniversalWebSocket] Browser connect failed:', err);
-        this.readyState = 3;
-        if (this.onerror) this.onerror(err);
-      }
+          if (this.onerror) this.onerror(err);
+          reject(err);
+        }
+      });
     }
   }
 
