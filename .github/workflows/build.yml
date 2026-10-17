@@ -126,43 +126,87 @@ jobs:
           cache: 'npm'
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
 
       - name: Install Rust & iOS Targets
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-ios,aarch64-apple-ios-sim,x86_64-apple-ios
 
+      # tauri ios init shells out to xcodegen; neither macos-latest nor macos-26
+      # ships it, and the old `|| true` is what hid that failure.
+      - name: Install xcodegen
+        run: command -v xcodegen >/dev/null 2>&1 || brew install xcodegen
+
       - name: Install npm dependencies
         run: npm ci
 
       - name: Init iOS Project
-        run: npx tauri ios init --skip-targets-install || true
+        run: |
+          set -euo pipefail
+          npx tauri ios init --ci --skip-targets-install
+          echo '--- src-tauri/gen/apple ---'
+          ls -la src-tauri/gen/apple
+          [ -n "$(find src-tauri/gen/apple -maxdepth 1 -name '*.xcodeproj' -print -quit)" ] \
+            || { echo '::error::tauri ios init produced no .xcodeproj'; exit 1; }
 
       - name: Build Unsigned iOS App
         run: |
+          set -euo pipefail
           npm run build
+          PROJ="$(find src-tauri/gen/apple -maxdepth 1 -name '*.xcodeproj' -print -quit)"
+          [ -n "$PROJ" ] || { echo '::error::no generated Xcode project'; exit 1; }
+          SCHEME="$(xcodebuild -list -json -project "$PROJ" | python3 -c 'import json,sys; s=json.load(sys.stdin)["project"].get("schemes") or []; print(next((x for x in s if x.endswith("_iOS")), s[0] if s else ""))')"
+          [ -n "$SCHEME" ] || { echo '::error::no scheme in generated project'; xcodebuild -list -project "$PROJ"; exit 1; }
+          echo "project=$PROJ scheme=$SCHEME"
           xcodebuild \
-            -project src-tauri/gen/apple/voicetavern.xcodeproj \
-            -scheme voicetavern_iOS \
+            -project "$PROJ" \
+            -scheme "$SCHEME" \
             -configuration Release \
             -destination 'generic/platform=iOS' \
-            -archivePath build/VoiceTavern.xcarchive \
+            -archivePath "$PWD/build/VoiceTavern.xcarchive" \
             archive \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            PROVISIONING_PROFILE="" || true
+            CODE_SIGN_ENTITLEMENTS="" \
+            PROVISIONING_PROFILE="" \
+            DEVELOPMENT_TEAM="" \
+            ONLY_ACTIVE_ARCH=NO
 
       - name: Package Unsigned IPA
         run: |
+          set -euo pipefail
+          APP=""
+          for p in build/VoiceTavern.xcarchive/Products/Applications src-tauri/gen/apple/build; do
+            [ -d "$p" ] || continue
+            APP="$(find "$p" -maxdepth 2 -name '*.app' -print -quit)"
+            if [ -n "$APP" ]; then break; fi
+          done
+          [ -n "$APP" ] || { echo '::error::archive produced no .app'; find build src-tauri/gen/apple -maxdepth 4 -name '*.app'; exit 1; }
+          echo "app=$APP"
+          rm -rf build/Payload
           mkdir -p build/Payload
-          if [ -d "build/VoiceTavern.xcarchive/Products/Applications" ]; then
-            cp -r build/VoiceTavern.xcarchive/Products/Applications/*.app build/Payload/
-          else
-            find src-tauri/gen/apple/build -name "*.app" -exec cp -r {} build/Payload/ \; || true
-          fi
-          cd build && zip -r ../VoiceTavern_unsigned.ipa Payload/
+          cp -R "$APP" build/Payload/
+          [ -n "$(find build/Payload -maxdepth 1 -name '*.app' -print -quit)" ] \
+            || { echo '::error::refusing to package an empty Payload'; exit 1; }
+          rm -rf build/Payload/*.app/_CodeSignature
+          rm -f build/Payload/*.app/embedded.mobileprovision
+          ( cd build && zip -qry ../VoiceTavern_unsigned.ipa Payload )
+          shasum -a 256 VoiceTavern_unsigned.ipa | tee VoiceTavern_unsigned.ipa.sha256
+          ls -l VoiceTavern_unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: VoiceTavern-unsigned-ipa
+          path: |
+            VoiceTavern_unsigned.ipa
+            VoiceTavern_unsigned.ipa.sha256
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Upload iOS IPA
         uses: softprops/action-gh-release@v2
@@ -170,4 +214,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: VoiceTavern_unsigned.ipa
+          files: |
+            VoiceTavern_unsigned.ipa
+            VoiceTavern_unsigned.ipa.sha256
