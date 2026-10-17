@@ -46,4 +46,4 @@
 - [x] 6.1 `npm run build` passes (tsc + vite)
 - [x] 6.2 Render both themes in a real browser; dark body `rgb(2,6,23)`, modal `rgb(15,23,42)`, inputs dark with light text
 - [x] 6.3 Custom provider fields and the prompt manager both render in the modal
-- [ ] 6.4 Build the IPA in CI and verify the bundle as in the previous change
+- [x] 6.4 Built in CI (run 38996631919): 3,131,717 bytes, arm64 Mach-O, no _CodeSignature, sha256 a4357…5205
