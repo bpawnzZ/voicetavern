@@ -24,18 +24,18 @@ export async function processCharacterCard(apiKey: string, cardData: any): Promi
 
   const rawText = extractRawTextFromCard(cardData);
 
-  const systemMessage = `你是一个专业的 AI 角色设定优化大师。
-用户将给你一份用于文字 RPG 的角色设定（包含各种细节规则、背景设定，但也混杂了复杂的 XML 标签、如 <UpdateVariable>、<Analysis>、好感度输出等）。
-由于复杂的格式指令会严重干扰“纯语音对话模型”的自然交流（导致 AI 说出类似“正文”、“好感度加一”等奇怪的话），你的任务是对其进行【无损净化】。
+  const systemMessage = `You are an expert at optimizing AI character definitions.
+The user will hand you a character definition meant for text RPGs (detailed settings, rules, background — but also mixed with complex XML tags like <UpdateVariable>, <Analysis>, affinity-score output and so on).
+Because those formatting instructions badly disrupt a pure voice model's natural conversation (making the AI say things like "body text" or "affinity +1"), your job is to sanitize it WITHOUT losing information.
 
-要求：
-1. 【禁止概括与缩减】：绝对不要概括、总结或精简原文本！必须尽可能 1:1 保留原文中所有的背景故事、细节设定、特殊规则（如特定回合数触发机制等）以及对话样例。
-2. 【精准剔除】：仅仅删除（或将其转化为自然语言描述）那些对纯语音模型有害的“格式化包装”，比如：
-   - XML 标签（如 <UpdateVariable>、<summary> 等）
-   - JSON 格式输出要求
-   - “必须以固定格式输出”、“每句话结尾必须包含好感度”等排版跟踪指令。
-3. 如果原文中有大量的分点设定、长篇规则说明，请原封不动地保留它们的信息量，只要去掉其中要求大模型以特殊格式输出的限制即可。
-4. 输出的结果必须是可以直接喂给大模型作为 System Prompt 的一段纯文本，不要包含任何你自己的开头寒暄或解释说明。`;
+Requirements:
+1. Never summarize or shorten: absolutely do not condense, summarize or trim the source! Preserve every bit of background story, detail, special rule (e.g. turn-count triggers) and dialogue example from the original 1:1 wherever possible.
+2. Remove precisely: delete only (or convert into natural language) the "formatting wrappers" that harm a pure voice model, such as:
+   - XML tags (e.g. <UpdateVariable>, <summary>)
+   - JSON output requirements
+   - layout/state-tracking instructions such as "always output in this fixed format" or "end every line with an affinity score".
+3. If the source contains lots of bulleted settings or long rule explanations, keep their information intact — just strip the constraints demanding a special output format.
+4. The result must be a single block of plain text that can be fed straight to a model as a system prompt. Do not add any greeting or explanation of your own.`;
 
   const response = await fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", {
     method: "POST",
@@ -48,7 +48,7 @@ export async function processCharacterCard(apiKey: string, cardData: any): Promi
       max_tokens: 100000,
       messages: [
         { role: "system", content: systemMessage },
-        { role: "user", content: `请帮我清洗并合并以下角色设定，输出干净纯粹的纯文本设定：\n\n${rawText}` }
+        { role: "user", content: `Please clean up and merge the following character definition and output clean, pure plain-text settings:\n\n${rawText}` }
       ]
     })
   });

@@ -160,7 +160,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
         await addCharacter(file.name, data.card, data.avatarUrl);
         setActiveCharacter({ id: file.name, card: data.card, avatarUrl: data.avatarUrl });
       } else if (file.name.endsWith('.webp')) {
-        alert('暂不支持直接导入 WebP 格式的酒馆卡，请尝试转换为 PNG 或直接使用 JSON。');
+        alert('WebP character cards are not supported — convert to PNG or use the JSON file.');
       } else if (file.name.endsWith('.json')) {
         const text = await file.text();
         const json = JSON.parse(text);
@@ -172,12 +172,12 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           await addWorldbook(file.name, json as Worldbook);
           setActiveWorldbook({ id: file.name, book: json as Worldbook });
         } else {
-          alert('无法识别该 JSON 文件的类型。');
+          alert('Unrecognized JSON file type.');
         }
       }
     } catch (err) {
       console.error(err);
-      alert('导入失败: ' + err);
+      alert('Import failed: ' + err);
     }
     e.target.value = '';
   };
@@ -202,7 +202,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
   const handleOptimize = async () => {
     if (!editingChar) return;
     const { apiKey } = useAppStore.getState();
-    if (!apiKey) return alert("请先在设置中填写 API Key");
+    if (!apiKey) return alert("Set your API key in Settings first");
     
     try {
       setOptimizeLoading(true);
@@ -222,9 +222,9 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       newCard.data.system_prompt = optimizedText;
       
       setEditingChar({ ...editingChar, card: newCard });
-      alert('优化成功！卡片设定已被净化合并为纯文本。请点击“保存修改”。');
+      alert('Optimized — the card was cleaned and merged into plain text. Click "Save changes".');
     } catch (e: any) {
-      alert('优化失败: ' + e.message);
+      alert('Optimization failed: ' + e.message);
     } finally {
       setOptimizeLoading(false);
     }
@@ -237,7 +237,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
   };
 
   const executeBatchDelete = async () => {
-    if (confirm(`确定删除这 ${totalSelected} 项内容吗？`)) {
+    if (confirm(`Delete these ${totalSelected} items?`)) {
       if (selectedCharIds.length > 0) await batchDeleteCharacters(selectedCharIds);
       if (selectedWbIds.length > 0) await batchDeleteWorldbooks(selectedWbIds);
       cancelBatchMode();
@@ -274,13 +274,13 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
               onClick={() => setActiveTab('library')}
               className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'library' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              <Library size={16} className="mr-1.5" /> 资料库
+              <Library size={16} className="mr-1.5" /> Library
             </button>
             <button 
               onClick={() => setActiveTab('sessions')}
               className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'sessions' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
-              <MessageSquare size={16} className="mr-1.5" /> 历史会话
+              <MessageSquare size={16} className="mr-1.5" /> Sessions
             </button>
           </div>
           <button onClick={onToggleCollapse} className="hidden md:flex p-1.5 rounded-full bg-white border border-gray-200 text-slate-400 hover:text-teal-700 shadow-sm transition-colors shrink-0">
@@ -298,10 +298,10 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 }} 
                 className={`flex-1 flex justify-center items-center py-2.5 rounded-xl border text-sm font-bold transition-all ${isBatchMode ? 'bg-teal-50 border-teal-200 text-teal-700 shadow-inner' : 'bg-white border-gray-200 text-slate-600 hover:border-teal-300 hover:text-teal-700 shadow-sm hover:shadow'}`}
               >
-                <ListChecks size={16} className="mr-1.5" /> {isBatchMode ? '取消批量' : '批量管理'}
+                <ListChecks size={16} className="mr-1.5" /> {isBatchMode ? 'Cancel batch' : 'Batch select'}
               </button>
               <button onClick={() => unifiedInputRef.current?.click()} className="flex-1 flex justify-center items-center py-2.5 rounded-xl bg-teal-500 hover:bg-teal-600 text-white text-sm font-bold shadow-md shadow-teal-500/20 transition-all">
-                <Upload size={16} className="mr-1.5" /> 导入资源
+                <Upload size={16} className="mr-1.5" /> Import
               </button>
               <input type="file" accept=".png,.webp,.jpeg,.jpg,.json" ref={unifiedInputRef} onChange={handleUnifiedImport} className="hidden" />
           </div>
@@ -310,12 +310,12 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       
       {activeTab === 'library' ? (
         <>
-          {/* 角色卡区 */}
+          {/* Character cards */}
           <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-            <span>角色卡</span>
+            <span>Characters</span>
           </h3>
         </div>
         
@@ -339,18 +339,18 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                   onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
                 />
               ))}
-              {characters.length === 0 && <div className="col-span-2 text-center text-xs text-slate-400 py-4 italic">暂无内容，请使用顶部导入</div>}
+              {characters.length === 0 && <div className="col-span-2 text-center text-xs text-slate-400 py-4 italic">Nothing here yet — use Import above</div>}
             </div>
           </SortableContext>
         </DndContext>
       </div>
 
-      {/* 世界书区 */}
+      {/* World books */}
       <div className="mb-10">
          <div className="flex justify-between items-center mb-3">
           <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-            <span>世界书</span>
+            <span>World books</span>
           </h3>
         </div>
         
@@ -385,7 +385,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           {sessions.length === 0 && (
             <div className="text-center text-slate-400 text-sm mt-10 italic flex flex-col items-center">
               <MessageSquare size={32} className="mb-3 text-slate-300" />
-              暂无历史会话
+              No sessions yet
             </div>
           )}
           {sessions.map(session => (
@@ -412,7 +412,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                   <Clock size={12} className="mr-1" /> 
                   {new Date(session.updatedAt).toLocaleDateString()}
                 </span>
-                <span>{session.messages.length} 条消息</span>
+                <span>{session.messages.length} messages</span>
               </div>
             </div>
           ))}
@@ -422,15 +422,15 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* Batch Operations Bar */}
       {isBatchMode && (
         <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md border border-gray-200 text-slate-800 rounded-xl shadow-2xl p-4 flex justify-between items-center z-50 animate-in slide-in-from-bottom-5">
-          <span className="text-sm font-bold">已选择 {totalSelected} 项</span>
+          <span className="text-sm font-bold">{totalSelected} selected</span>
           <div className="flex space-x-3">
-            <button onClick={cancelBatchMode} className="text-slate-500 hover:text-slate-800 text-sm px-2 font-medium">取消</button>
+            <button onClick={cancelBatchMode} className="text-slate-500 hover:text-slate-800 text-sm px-2 font-medium">Cancel</button>
             <button 
               onClick={executeBatchDelete}
               disabled={totalSelected === 0}
               className="bg-red-50 hover:bg-red-100 border border-red-200 disabled:opacity-50 text-red-600 font-semibold text-sm px-4 py-1.5 rounded-lg flex items-center transition-colors"
             >
-              <Trash2 size={14} className="mr-1" /> 批量删除
+              <Trash2 size={14} className="mr-1" /> Delete selected
             </button>
           </div>
         </div>
@@ -454,7 +454,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                  setContextMenu(null);
               }}
             >
-              <Edit2 size={14} className="mr-2" /> 编辑
+              <Edit2 size={14} className="mr-2" /> Edit
             </button>
           )}
           {contextMenu.type === 'worldbook' && (
@@ -468,7 +468,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                  setContextMenu(null);
               }}
             >
-              <Edit2 size={14} className="mr-2" /> 编辑重命名
+              <Edit2 size={14} className="mr-2" /> Rename
             </button>
           )}
           {contextMenu.type === 'session' && (
@@ -482,7 +482,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                  setContextMenu(null);
               }}
             >
-              <Edit2 size={14} className="mr-2" /> 重命名
+              <Edit2 size={14} className="mr-2" /> Rename
             </button>
           )}
           <button 
@@ -494,7 +494,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
               setContextMenu(null);
             }}
           >
-            <Trash2 size={14} className="mr-2" /> 删除
+            <Trash2 size={14} className="mr-2" /> Delete
           </button>
         </div>
       )}
@@ -504,7 +504,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
-              <h3 className="font-bold text-slate-800">编辑角色卡</h3>
+              <h3 className="font-bold text-slate-800">Edit character card</h3>
               <button onClick={() => setEditingChar(null)} className="text-slate-400 hover:text-slate-700">
                 <X size={20} />
               </button>
@@ -529,7 +529,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 </div>
                 
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">角色名称</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Character name</label>
                   <input 
                     type="text" 
                     value={editingChar.name} 
@@ -544,22 +544,22 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 {/* Left Pane: Raw Text */}
                 <div className="flex-1 flex flex-col space-y-2">
                   <label className="text-sm font-bold text-slate-700 flex items-center justify-between">
-                    <span>转写前（原始提取信息）</span>
-                    <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">只读</span>
+                    <span>Before (extracted from card)</span>
+                    <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">read-only</span>
                   </label>
                   <textarea 
                     readOnly
                     value={initialRawText}
                     className="flex-1 w-full p-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"
-                    placeholder="原卡片中的各种字段信息..."
+                    placeholder="Fields extracted from the original card..."
                   />
                 </div>
 
                 {/* Right Pane: Optimized Text */}
                 <div className="flex-1 flex flex-col space-y-2">
                   <label className="text-sm font-bold text-teal-700 flex items-center justify-between">
-                    <span>转写后（最终系统提示词）</span>
-                    <span className="text-xs font-normal text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">可编辑</span>
+                    <span>After (final system prompt)</span>
+                    <span className="text-xs font-normal text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">editable</span>
                   </label>
                   <textarea 
                     value={editingChar.card.data?.system_prompt || ''}
@@ -570,7 +570,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                       setEditingChar({ ...editingChar, card: newCard });
                     }}
                     className="flex-1 w-full p-3 text-sm text-slate-800 bg-white border border-teal-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 resize-none shadow-sm"
-                    placeholder="优化后的纯净提示词将会出现在这里..."
+                    placeholder="The cleaned prompt will appear here..."
                   />
                 </div>
               </div>
@@ -582,10 +582,10 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 disabled={optimizeLoading}
                 className="px-5 py-2.5 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 shadow-sm rounded-lg font-bold transition-all disabled:opacity-50 flex items-center space-x-2"
               >
-                {optimizeLoading ? '正在思考并重写...' : '🤖 AI 一键清洗与重写'}
+                {optimizeLoading ? 'Rewriting…' : '🤖 Clean & rewrite with AI'}
               </button>
               <button onClick={saveCharacterEdit} className="px-8 py-2.5 text-sm text-white bg-teal-500 hover:bg-teal-600 shadow-sm rounded-lg font-bold transition-colors">
-                保存修改
+                Save changes
               </button>
             </div>
           </div>
@@ -598,7 +598,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">编辑世界书</h3>
+              <h3 className="font-bold text-slate-800">Edit world book</h3>
               <button onClick={() => setEditingWb(null)} className="text-slate-400 hover:text-slate-700">
                 <X size={20} />
               </button>
@@ -608,7 +608,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 <Book size={40} />
               </div>
               <div className="w-full">
-                <label className="block text-sm font-medium text-slate-700 mb-1">世界书名称</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">World book name</label>
                 <input 
                   type="text" 
                   value={editingWb.name} 
@@ -621,7 +621,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
               <button onClick={async () => {
                 await updateWorldbook(editingWb.id, { ...editingWb.book, name: editingWb.name });
                 setEditingWb(null);
-              }} className="px-6 py-2 text-sm text-white bg-teal-500 hover:bg-teal-600 shadow-sm rounded-lg font-medium transition-colors">保存修改</button>
+              }} className="px-6 py-2 text-sm text-white bg-teal-500 hover:bg-teal-600 shadow-sm rounded-lg font-medium transition-colors">Save changes</button>
             </div>
           </div>
         </div>,
@@ -633,14 +633,14 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">重命名会话</h3>
+              <h3 className="font-bold text-slate-800">Rename session</h3>
               <button onClick={() => setEditingSession(null)} className="text-slate-400 hover:text-slate-700">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 flex flex-col items-center">
               <div className="w-full">
-                <label className="block text-sm font-medium text-slate-700 mb-1">会话标题</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Session title</label>
                 <input 
                   type="text" 
                   value={editingSession.title} 
@@ -657,7 +657,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 }
                 setEditingSession(null);
               }} className="px-6 py-2 text-sm text-white bg-teal-500 hover:bg-teal-600 shadow-sm rounded-lg font-medium transition-colors">
-                保存
+                Save
               </button>
             </div>
           </div>

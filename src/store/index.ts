@@ -112,7 +112,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ useVoicePrompt: v });
   },
 
-  userName: localStorage.getItem('vt_user_name') || '我',
+  userName: localStorage.getItem('vt_user_name') || 'Me',
   setUserName: (name) => {
     localStorage.setItem('vt_user_name', name);
     set({ userName: name });
@@ -304,7 +304,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const title = msg.text.slice(0, 15) + (msg.text.length > 15 ? '...' : '');
       const newSession: ChatSession = {
         id: activeSessionId,
-        title: title || '新会话',
+        title: title || 'New Chat',
         messages: newMessages,
         characterId: state.activeCharacter?.id,
         worldbookId: state.activeWorldbook?.id,

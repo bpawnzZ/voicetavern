@@ -69,12 +69,12 @@ export async function importFullBackup(jsonContent: string): Promise<boolean> {
   try {
     const data: VoiceTavernBackup = JSON.parse(jsonContent);
     if (!data.characters && !data.providerConfigs) {
-      throw new Error('无效的备份文件格式');
+      throw new Error('Invalid backup file format');
     }
 
     const store = useAppStore.getState();
 
-    // 恢复配置
+    // Restore configuration
     if (data.userName) store.setUserName(data.userName);
     if (typeof data.useVoicePrompt === 'boolean') store.setUseVoicePrompt(data.useVoicePrompt);
     if (data.voiceProvider) store.setVoiceProvider(data.voiceProvider as any);
@@ -84,7 +84,7 @@ export async function importFullBackup(jsonContent: string): Promise<boolean> {
       });
     }
 
-    // 恢复角色卡
+    // Restore character cards
     if (data.characters) {
       for (const id of Object.keys(data.characters)) {
         const item = data.characters[id];
@@ -94,36 +94,36 @@ export async function importFullBackup(jsonContent: string): Promise<boolean> {
       }
     }
 
-    // 恢复世界书
+    // Restore world books
     if (data.worldbooks) {
       for (const id of Object.keys(data.worldbooks)) {
         await saveWorldbook(id, data.worldbooks[id]);
       }
     }
 
-    // 恢复预设
+    // Restore presets
     if (data.presets) {
       for (const id of Object.keys(data.presets)) {
         await savePreset(id, data.presets[id]);
       }
     }
 
-    // 恢复会话
+    // Restore sessions
     if (data.sessions) {
       for (const id of Object.keys(data.sessions)) {
         await saveSession(id, data.sessions[id]);
       }
     }
 
-    // 恢复排序
+    // Restore ordering
     if (data.charOrder) await saveOrder('characters', data.charOrder);
     if (data.wbOrder) await saveOrder('worldbooks', data.wbOrder);
 
-    // 重新加载资源库
+    // Reload the library
     await store.loadLibrary();
     return true;
   } catch (e: any) {
     console.error('Import backup failed:', e);
-    throw new Error('导入失败: ' + e.message);
+    throw new Error('Import failed: ' + e.message);
   }
 }

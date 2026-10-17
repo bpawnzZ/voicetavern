@@ -2,11 +2,11 @@
 
 <p align="center">
   <b>A modern, ultra-low latency real-time voice chat app for SillyTavern character cards.</b><br>
-  <b>全平台酒馆角色卡实时语音对话客户端 (macOS / Windows / Linux / Android / iOS)</b>
+  <b>Cross-platform realtime voice chat client for tavern character cards (macOS / Windows / Linux / Android / iOS)</b>
 </p>
 
 <p align="center">
-  <a href="README_CN.md">🇨🇳 简体中文</a> | <a href="README.md">🇺🇸 English</a> | <a href="https://github.com/lukelzlz/voicetavern/releases">📦 Download Releases</a>
+  <a href="README_CN.md">🇨🇳 Simplified Chinese</a> | <a href="README.md">🇺🇸 English</a> | <a href="https://github.com/lukelzlz/voicetavern/releases">📦 Download Releases</a>
 </p>
 
 <p align="center">
@@ -28,8 +28,8 @@
   - **xAI Grok Voice** (`grok-voice-latest`)
   - **Google Gemini Multimodal Live** (`gemini-2.0-flash-exp`)
   - **Alibaba DashScope Qwen Realtime** (`qwen-audio-3.0-realtime-plus`)
-  - **Volcengine Doubao (火山豆包)** (`doubao-realtime`)
-  - **Zhipu GLM-Realtime (智谱清言)** (`glm-realtime`)
+  - **Volcengine Doubao** (`doubao-realtime`)
+  - **Zhipu GLM-Realtime** (`glm-realtime`)
 - 🎴 **Native SillyTavern Compatibility**: Seamlessly import V1/V2 PNG/JSON character cards. Automatically extracts embedded lorebooks (`character_book`), descriptions, scenarios, personalities, and custom system prompts.
 - 🤖 **Lossless AI Card Purification (Qwen3.8-Max)**: Specially engineered for complex text-RPG cards. Cleanses voice-breaking XML tags (`<UpdateVariable>`, `<Analysis>`, `<summary>`), JSON wrappers, and stat-tracking mechanics while preserving 100% of personality, backstory, and dialogue styles.
 - 📝 **Dual-Pane Side-by-Side Editor**: Compare raw extracted card data with the purified system prompt, with in-place manual editing support.

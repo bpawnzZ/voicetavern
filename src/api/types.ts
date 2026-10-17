@@ -20,30 +20,30 @@ export interface ProviderInfo {
 }
 
 export const PROVIDERS: ProviderInfo[] = [
-  { id: 'qwen', name: '通义千问', subName: 'Qwen Realtime' },
+  { id: 'qwen', name: 'Qwen', subName: 'Qwen Realtime' },
   { id: 'xai', name: 'xAI Grok Voice', subName: 'Speech-to-Speech' },
   { id: 'openai', name: 'OpenAI Realtime', subName: 'gpt-4o-realtime' },
   { id: 'gemini', name: 'Google Gemini', subName: 'Multimodal Live' },
-  { id: 'volcengine', name: '火山引擎豆包', subName: 'Doubao Realtime', hasAppId: true },
-  { id: 'glm', name: '智谱清言', subName: 'GLM-Realtime' },
+  { id: 'volcengine', name: 'Doubao (Volcengine)', subName: 'Doubao Realtime', hasAppId: true },
+  { id: 'glm', name: 'Zhipu GLM', subName: 'GLM-Realtime' },
 ];
 
 export const QWEN_VOICES = [
-  { id: 'longanqian', name: '龙安浅 (标准女声)' },
-  { id: 'longanlingxin', name: '龙安灵心 (灵动女声)' },
-  { id: 'longanlufeng', name: '龙安鲁风 (沉稳男声)' },
-  { id: 'longanlingxi', name: '龙安灵犀 (温柔女声)' },
-  { id: 'longanxiaoxin', name: '龙安小欣 (活泼女声)' },
-  { id: 'longanfengyue', name: '龙安风悦 (御姐女声)' },
-  { id: 'longanyuanfei', name: '龙安远飞 (阳光男声)' },
-  { id: 'longanhuan_v3.6', name: '龙安欢 (欢快女声)' },
-  { id: 'longjielidou_v3.6', name: '龙果粒豆 (萌系童声)' },
-  { id: 'longpaopao_v3.6', name: '龙泡泡 (可爱童声)' },
-  { id: 'longhuohuo_v3.6', name: '龙火火 (热情男声)' },
-  { id: 'longchuanshu_v3.6', name: '龙川书 (沉稳大叔)' },
-  { id: 'loongmary', name: 'Mary (英文女声)' },
-  { id: 'loongeva_v3.6', name: 'Eva (英文女声)' },
-  { id: 'loongjohn', name: 'John (英文男声)' },
+  { id: 'longanqian', name: 'Longan Qian (standard female)' },
+  { id: 'longanlingxin', name: 'Longan Lingxin (lively female)' },
+  { id: 'longanlufeng', name: 'Longan Lufeng (steady male)' },
+  { id: 'longanlingxi', name: 'Longan Lingxi (gentle female)' },
+  { id: 'longanxiaoxin', name: 'Longan Xiaoxin (cheerful female)' },
+  { id: 'longanfengyue', name: 'Longan Fengyue (mature female)' },
+  { id: 'longanyuanfei', name: 'Longan Yuanfei (bright male)' },
+  { id: 'longanhuan_v3.6', name: 'Longan Huan (joyful female)' },
+  { id: 'longjielidou_v3.6', name: 'Long Guolidou (cute child)' },
+  { id: 'longpaopao_v3.6', name: 'Long Paopao (cute child)' },
+  { id: 'longhuohuo_v3.6', name: 'Long Huohuo (passionate male)' },
+  { id: 'longchuanshu_v3.6', name: 'Long Chuanshu (steady older male)' },
+  { id: 'loongmary', name: 'Mary (English female)' },
+  { id: 'loongeva_v3.6', name: 'Eva (English female)' },
+  { id: 'loongjohn', name: 'John (English male)' },
 ];
 
 export const XAI_VOICES = [
@@ -75,12 +75,12 @@ export const GEMINI_VOICES = [
 ];
 
 export const VOLCENGINE_VOICES = [
-  { id: 'cancan', name: '灿灿 (通用女声)' },
-  { id: 'zizi', name: '梓梓 (通用女声)' },
-  { id: 'qingcang', name: '擎苍 (通用男声)' },
+  { id: 'cancan', name: 'Cancan (general female)' },
+  { id: 'zizi', name: 'Zizi (general female)' },
+  { id: 'qingcang', name: 'Qingcang (general male)' },
 ];
 
 export const GLM_VOICES = [
-  { id: 'cogvoice-female', name: 'CogVoice (标准女声)' },
-  { id: 'cogvoice-male', name: 'CogVoice (标准男声)' },
+  { id: 'cogvoice-female', name: 'CogVoice (standard female)' },
+  { id: 'cogvoice-male', name: 'CogVoice (standard male)' },
 ];

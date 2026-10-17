@@ -22,7 +22,7 @@ export default function ChatLayout() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 组件卸载或重置时，彻底销毁任何残留的语音连接与麦克风
+  // Tear down any leftover voice connection and microphone on unmount or reset
   useEffect(() => {
     return () => {
       if (clientRef.current) {
@@ -45,7 +45,7 @@ export default function ChatLayout() {
     } else {
       const activeConfig = providerConfigs[voiceProvider] || { apiKey: '', voice: '' };
       if (!activeConfig.apiKey?.trim()) {
-        const err = `请先在设置中填写 ${voiceProvider.toUpperCase()} API Key`;
+        const err = `Set your ${voiceProvider.toUpperCase()} API key in Settings first`;
         setErrorMessage(err);
         return alert(err);
       }
@@ -82,7 +82,7 @@ export default function ChatLayout() {
         };
       }
 
-      // 组装最终的 System Prompt
+      // Assemble the final system prompt
       const systemPrompt = assemblePrompt(null, charData, constantLore, useAppStore.getState().useVoicePrompt, useAppStore.getState().userName);
       
       console.log(`--- Final System Prompt (${voiceProvider.toUpperCase()}) ---\n`, systemPrompt);
@@ -97,7 +97,7 @@ export default function ChatLayout() {
 
       const onError = (err: string) => {
         console.error('API Error:', err);
-        setErrorMessage(typeof err === 'string' ? err : '连接异常');
+        setErrorMessage(typeof err === 'string' ? err : 'Connection error');
         if (clientRef.current) {
           clientRef.current.disconnect();
           clientRef.current = null;
@@ -120,7 +120,7 @@ export default function ChatLayout() {
         setIsConnected(true);
       } catch (e: any) {
         console.error('Connect failed:', e);
-        const msg = e?.message || '连接失败，请检查网络或 API Key';
+        const msg = e?.message || 'Connection failed — check your network or API key';
         setErrorMessage(msg);
         if (clientRef.current) {
           clientRef.current.disconnect();
@@ -133,7 +133,7 @@ export default function ChatLayout() {
 
   return (
     <div className="flex h-full w-full relative bg-white">
-      {/* 顶部错误提示横幅 */}
+      {/* Error banner */}
       {errorMessage && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[90%] bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center space-x-2 text-sm font-medium overflow-hidden">
@@ -149,7 +149,7 @@ export default function ChatLayout() {
         </div>
       )}
       
-      {/* 移动端 菜单按钮 */}
+      {/* Mobile menu button */}
       <div className="md:hidden absolute top-4 left-4 z-20">
         <button 
           onClick={() => setIsMobileSidebarOpen(true)}
@@ -159,7 +159,7 @@ export default function ChatLayout() {
         </button>
       </div>
 
-      {/* 移动端 Sidebar (Drawer) */}
+      {/* Mobile sidebar (drawer) */}
       <div className={`
         fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm transition-opacity duration-300 md:hidden
         ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
@@ -178,18 +178,18 @@ export default function ChatLayout() {
         </div>
       </div>
 
-      {/* 桌面端 Sidebar */}
+      {/* Desktop sidebar */}
       <div className="hidden md:flex h-full shrink-0">
         <LibrarySidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
       </div>
 
-      {/* 主聊天区域 */}
+      {/* Main chat area */}
       <div className="flex-1 flex flex-col relative bg-white min-w-0 transition-all duration-300">
         
         <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth z-0 pt-4 md:pt-8 bg-white">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-6">
-              <p className="text-lg tracking-wide font-medium text-slate-400">点击底部按钮，开始沉浸式语音对话</p>
+              <p className="text-lg tracking-wide font-medium text-slate-400">Tap the button below to start a voice conversation</p>
             </div>
           )}
           
@@ -210,7 +210,7 @@ export default function ChatLayout() {
           <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* 底部悬浮语音控制栏 */}
+        {/* Floating voice control bar */}
         <div className="h-36 bg-white border-t border-gray-200 flex flex-col items-center justify-center px-4 relative pb-4 z-10 rounded-t-3xl md:rounded-none">
           <div className="absolute top-0 left-0 right-0 transform -translate-y-1/2 flex justify-center">
             <div className="relative group">
@@ -236,7 +236,7 @@ export default function ChatLayout() {
           <p className={`text-xs mt-3 font-semibold tracking-wider uppercase transition-colors duration-300 ${
             isConnected ? 'premium-text-gradient animate-pulse' : 'text-slate-400'
           }`}>
-            {isConnected ? '正在倾听与思考中...' : '已断开连接'}
+            {isConnected ? 'Listening and thinking…' : 'Disconnected'}
           </p>
         </div>
       </div>
