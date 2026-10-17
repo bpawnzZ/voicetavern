@@ -10,33 +10,46 @@ executes `xcodegen generate --spec project.yml` (verified in tauri-cli
 1. **`xcodegen` must be on PATH.** Neither `macos-latest` nor `macos-26` lists it among
    installed tools. Without it, init dies after writing `project.yml` — historically
    swallowed by `|| true`, which is why `src-tauri/gen/apple/` never appeared.
-2. **Project and scheme names derive from `productName`.** With
-   `productName: VoiceTavern` the products are `VoiceTavern.xcodeproj` and scheme
-   `VoiceTavern_iOS`. The committed `voicetavern.xcodeproj` / `voicetavern_iOS` were
-   lowercase guesses — wrong *and* masked.
+2. **The generated names are lowercase.** They follow the crate/app name
+   (`voicetavern`), not `productName`; `productName` only sets `PRODUCT_NAME`
+   (`VoiceTavern.app`). The committed lowercase project/scheme names were therefore
+   right — they were simply never reached, because init failed first.
 
 ## Decisions
 
-### Discover the project, never hardcode it
+### Project and scheme names
 
-Print `src-tauri/gen/apple/` after init, then resolve:
+The generated project is **`voicetavern.xcodeproj`** with target/scheme
+**`voicetavern_iOS`** — lowercase, derived from the Cargo package name, *not* from
+`productName` (`VoiceTavern` only becomes `PRODUCT_NAME`, i.e. `VoiceTavern.app`). The
+upstream hardcoded names were therefore correct; they were simply never reached,
+because init failed first. The init step asserts the `.xcodeproj` by glob rather than
+by name so a future rename cannot silently pass, and prints the tree.
 
-```bash
-PROJ=$(find src-tauri/gen/apple -maxdepth 1 -name '*.xcodeproj' -print -quit)
-SCHEME=$(xcodebuild -list -json -project "$PROJ" | python3 -c 'import json,sys; ...')
+### `tauri ios build --no-sign`, not a bare `xcodebuild`
+
+The first CI run disproved the direct-`xcodebuild` plan. The generated project's
+"Build Rust Code" phase runs `tauri ios xcode-script`, which connects to the CLI's
+options server at `$TMPDIR/<identifier>-server-addr`. With no `tauri` process serving
+that file, the phase panics and the archive dies with exit 65:
+
+```
+thread '<unnamed>' panicked at crates/tauri-cli/src/mobile/mod.rs:386:59:
+failed to read missing addr file /var/folders/.../T/com.voicetavern.app-server-addr:
+No such file or directory (os error 2)
 ```
 
-A name change upstream then costs a log line, not a red run. This also satisfies the
-"print the actual generated path and adjust" requirement without a local macOS box.
-If discovery is empty the step fails with an `::error::` annotation.
+That is architectural, not a missing flag. `tauri ios build` is the supported device
+path: it starts the options server, runs `beforeBuildCommand`, builds and archives.
+`--no-sign` ("Skip code signing when bundling the app") archives unsigned and skips
+the IPA export, so packaging stays ours.
 
-### `xcodebuild archive`, not `tauri ios build`
-
-`tauri ios build` is the local-dev path and wants a signing identity for device
-builds. Command-line settings beat project settings, so signing is disabled at the
-invocation: `CODE_SIGNING_ALLOWED=NO`, `CODE_SIGNING_REQUIRED=NO`,
-`CODE_SIGN_IDENTITY=""`, `PROVISIONING_PROFILE=""`, `CODE_SIGN_ENTITLEMENTS=""`,
-`DEVELOPMENT_TEAM=""`, plus `ONLY_ACTIVE_ARCH=NO` for a full arm64 slice.
+**Configuration names are lowercase.** The template emits
+`configs: { debug: debug, release: release }`, so the build configurations are literally
+`debug` and `release`. `-configuration Release` matched nothing, so xcodebuild fell back
+to `debug` — and `xcode-script` decides `profile_from_configuration` by
+`configuration == "release"`, which is why the debug profile also demanded the dev
+server. `tauri ios build` passes the right one; no `-configuration` juggling required.
 
 ### `npm ci && npm run build` before archiving
 
