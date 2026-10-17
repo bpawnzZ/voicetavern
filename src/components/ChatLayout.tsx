@@ -54,7 +54,7 @@ export default function ChatLayout() {
       let constantLore: string[] = [];
       if (activeWorldbook) {
         wbEngine = new WorldbookEngine(activeWorldbook.book);
-        constantLore = wbEngine.getConstantEntries();
+
       }
 
       let charData = undefined;
@@ -82,8 +82,30 @@ export default function ChatLayout() {
         };
       }
 
+      // Lore: always-on entries plus keyword-triggered ones (query() was never
+      // called before, so triggered entries never fired).
+      if (wbEngine) {
+        const scan = [
+          charData?.name,
+          charData?.description,
+          charData?.scenario,
+          ...messages.slice(-12).map((m) => m.text),
+        ]
+          .filter(Boolean)
+          .join('\n');
+        constantLore = [...new Set([...wbEngine.getConstantEntries(), ...wbEngine.query(scan)])];
+      }
+
       // Assemble the final system prompt
-      const systemPrompt = assemblePrompt(null, charData, constantLore, useAppStore.getState().useVoicePrompt, useAppStore.getState().userName);
+      const { mainPrompt, auxPrompts } = useAppStore.getState();
+      const systemPrompt = assemblePrompt(
+        mainPrompt.trim() ? { name: 'Custom', system_prompt: mainPrompt } : null,
+        charData,
+        constantLore,
+        useAppStore.getState().useVoicePrompt,
+        useAppStore.getState().userName,
+        auxPrompts
+      );
       
       console.log(`--- Final System Prompt (${voiceProvider.toUpperCase()}) ---\n`, systemPrompt);
 
@@ -132,10 +154,10 @@ export default function ChatLayout() {
   };
 
   return (
-    <div className="flex h-full w-full relative bg-white">
+    <div className="flex h-full w-full relative bg-white dark:bg-slate-900">
       {/* Error banner */}
       {errorMessage && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[90%] bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[90%] bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-300 px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
           <div className="flex items-center space-x-2 text-sm font-medium overflow-hidden">
             <span className="shrink-0 text-base">⚠️</span>
             <span className="truncate">{errorMessage}</span>
@@ -153,7 +175,7 @@ export default function ChatLayout() {
       <div className="md:hidden absolute top-4 left-4 z-20">
         <button 
           onClick={() => setIsMobileSidebarOpen(true)}
-          className="p-2.5 rounded-xl bg-white border border-gray-200 text-slate-600 hover:text-slate-900 shadow-sm"
+          className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 shadow-sm"
         >
           <Menu size={24} />
         </button>
@@ -170,7 +192,7 @@ export default function ChatLayout() {
         `}>
           <button 
             onClick={() => setIsMobileSidebarOpen(false)}
-            className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors z-50"
+            className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors z-50"
           >
             <X size={24} />
           </button>
@@ -184,9 +206,9 @@ export default function ChatLayout() {
       </div>
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col relative bg-white min-w-0 transition-all duration-300">
+      <div className="flex-1 flex flex-col relative bg-white dark:bg-slate-900 min-w-0 transition-all duration-300">
         
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth z-0 pt-4 md:pt-8 bg-white">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth z-0 pt-4 md:pt-8 bg-white dark:bg-slate-900">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-6">
               <p className="text-lg tracking-wide font-medium text-slate-400">Tap the button below to start a voice conversation</p>
@@ -196,12 +218,12 @@ export default function ChatLayout() {
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in slide-in-from-bottom-2 fade-in duration-300`}>
               {m.role !== 'user' && activeCharacter?.avatarUrl && (
-                <img src={activeCharacter.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover mr-3 mt-1 shadow-sm border border-gray-200" />
+                <img src={activeCharacter.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full object-cover mr-3 mt-1 shadow-sm border border-gray-200 dark:border-slate-800" />
               )}
               <div className={`max-w-[85%] md:max-w-[75%] rounded-2xl px-5 py-3.5 shadow-sm border ${
                 m.role === 'user' 
-                  ? 'bg-gradient-to-br from-teal-400 to-emerald-400 text-teal-950 border-transparent shadow-teal-400/20 rounded-br-sm' 
-                  : 'bg-slate-50 border-gray-200 text-slate-800 rounded-bl-sm'
+                  ? 'bg-gradient-to-br from-teal-400 to-emerald-400 text-teal-950 dark:text-teal-100 border-transparent shadow-teal-400/20 rounded-br-sm' 
+                  : 'bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-bl-sm'
               }`}>
                 <p className="whitespace-pre-wrap leading-relaxed text-[15px]">{m.text}</p>
               </div>
@@ -211,7 +233,7 @@ export default function ChatLayout() {
         </div>
 
         {/* Floating voice control bar */}
-        <div className="h-36 bg-white border-t border-gray-200 flex flex-col items-center justify-center px-4 relative pb-4 z-10 rounded-t-3xl md:rounded-none">
+        <div className="h-36 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 flex flex-col items-center justify-center px-4 relative pb-4 z-10 rounded-t-3xl md:rounded-none">
           <div className="absolute top-0 left-0 right-0 transform -translate-y-1/2 flex justify-center">
             <div className="relative group">
               {isConnected && (
@@ -222,7 +244,7 @@ export default function ChatLayout() {
                 className={`relative p-5 rounded-full shadow-lg transition-all duration-300 transform active:scale-90 ${
                   isConnected 
                     ? 'bg-gradient-to-tr from-rose-400 to-orange-400 hover:shadow-rose-400/30 hover:scale-105 border-4 border-white text-white' 
-                    : 'bg-gradient-to-tr from-teal-200 to-emerald-300 hover:shadow-teal-300/30 hover:scale-105 border-4 border-white text-teal-900'
+                    : 'bg-gradient-to-tr from-teal-200 to-emerald-300 hover:shadow-teal-300/30 hover:scale-105 border-4 border-white text-teal-900 dark:text-teal-200'
                 }`}
               >
                 {isConnected ? <MicOff size={32} /> : <Mic size={32} />}

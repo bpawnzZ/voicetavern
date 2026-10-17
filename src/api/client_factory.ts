@@ -4,6 +4,7 @@ import { OpenAIRealtimeClient } from './openai_realtime';
 import { GeminiRealtimeClient } from './gemini_realtime';
 import { VolcengineRealtimeClient } from './volcengine_realtime';
 import { GLMRealtimeClient } from './glm_realtime';
+import { OpenAICompatClient } from './openai_compat';
 import type { RealtimeVoiceClient, VoiceProvider, ProviderConfig } from './types';
 import type { WorldbookEngine } from '../utils/worldbook_engine';
 
@@ -32,6 +33,8 @@ export function createRealtimeClient(params: CreateClientParams): RealtimeVoiceC
       return new VolcengineRealtimeClient(config.apiKey, config.appId || '', systemPrompt, worldbookEngine, onMessage, onError, config.voice);
     case 'glm':
       return new GLMRealtimeClient(config.apiKey, systemPrompt, worldbookEngine, onMessage, onError, config.voice);
+    case 'custom':
+      return new OpenAICompatClient(config, systemPrompt, onMessage, onError);
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }

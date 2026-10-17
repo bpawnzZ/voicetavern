@@ -5,6 +5,7 @@ import { getCharacters, getWorldbooks, saveCharacter, deleteCharacter, saveWorld
 import type { ChatSession } from '../utils/storage';
 
 import type { VoiceProvider, ProviderConfig } from '../api/types';
+import type { AuxPrompt } from '../utils/preset_engine';
 
 interface AppState {
   apiKey: string;
@@ -12,6 +13,14 @@ interface AppState {
 
   useVoicePrompt: boolean;
   setUseVoicePrompt: (v: boolean) => void;
+
+  darkMode: boolean;
+  setDarkMode: (v: boolean) => void;
+
+  mainPrompt: string;
+  setMainPrompt: (v: string) => void;
+  auxPrompts: AuxPrompt[];
+  setAuxPrompts: (p: AuxPrompt[]) => void;
 
   userName: string;
   setUserName: (name: string) => void;
@@ -81,6 +90,7 @@ const loadSavedConfigs = (): Record<VoiceProvider, ProviderConfig> => {
     gemini: { apiKey: '', voice: 'Puck', model: 'gemini-2.0-flash-exp' },
     volcengine: { apiKey: '', appId: '', voice: 'cancan' },
     glm: { apiKey: '', voice: 'cogvoice-female' },
+    custom: { apiKey: '', baseUrl: '', voice: 'alloy', model: 'gpt-4o-mini', sttModel: 'whisper-1', ttsModel: 'tts-1' },
   };
 
   if (saved) {
@@ -98,6 +108,16 @@ const loadSavedConfigs = (): Record<VoiceProvider, ProviderConfig> => {
   return defaults;
 };
 
+const loadAuxPrompts = (): AuxPrompt[] => {
+  try {
+    const raw = localStorage.getItem('vt_aux_prompts');
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 export const useAppStore = create<AppState>((set, get) => ({
   apiKey: localStorage.getItem('dashscope_api_key') || '',
   setApiKey: (key) => {
@@ -105,6 +125,25 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().updateProviderConfig('qwen', { apiKey: key });
     set({ apiKey: key });
   },
+  darkMode: localStorage.getItem('vt_dark_mode') === 'dark' ||
+    (localStorage.getItem('vt_dark_mode') === null &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches),
+  mainPrompt: localStorage.getItem('vt_main_prompt') || '',
+  setMainPrompt: (v) => {
+    localStorage.setItem('vt_main_prompt', v);
+    set({ mainPrompt: v });
+  },
+  auxPrompts: loadAuxPrompts(),
+  setAuxPrompts: (p) => {
+    localStorage.setItem('vt_aux_prompts', JSON.stringify(p));
+    set({ auxPrompts: p });
+  },
+
+  setDarkMode: (v) => {
+    localStorage.setItem('vt_dark_mode', v ? 'dark' : 'light');
+    set({ darkMode: v });
+  },
+
 
   useVoicePrompt: localStorage.getItem('vt_use_voice_prompt') !== 'false',
   setUseVoicePrompt: (v) => {

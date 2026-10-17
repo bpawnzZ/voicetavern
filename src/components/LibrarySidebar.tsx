@@ -33,11 +33,11 @@ function SortableCharacterCard({
       onContextMenu={(e) => { e.preventDefault(); if (!isBatchMode) onContextMenu(e); }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
-      className={`relative group cursor-pointer rounded-xl border p-3 flex flex-col items-center justify-center transition-all duration-200 ${isActive && !isBatchMode ? 'bg-white border-teal-400 shadow-md shadow-teal-400/20' : 'bg-white/60 border-gray-200 hover:bg-white hover:border-teal-200 hover:shadow-sm'} ${isChecked ? 'ring-2 ring-teal-500 bg-teal-50' : ''}`}
+      className={`relative group cursor-pointer rounded-xl border p-3 flex flex-col items-center justify-center transition-all duration-200 ${isActive && !isBatchMode ? 'bg-white dark:bg-slate-900 border-teal-400 shadow-md shadow-teal-400/20' : 'bg-white/60 border-gray-200 dark:border-slate-800 hover:bg-white hover:border-teal-200 hover:shadow-sm'} ${isChecked ? 'ring-2 ring-teal-500 bg-teal-50 dark:bg-teal-950/40' : ''}`}
     >
       {isBatchMode && (
         <div className="absolute top-2 left-2 z-10">
-          <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500 pointer-events-none" />
+          <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-4 h-4 text-teal-600 dark:text-teal-400 rounded border-gray-300 focus:ring-teal-500 pointer-events-none" />
         </div>
       )}
       {!isBatchMode && isActive && <div className="absolute top-1.5 left-1.5 text-teal-500"><CheckCircle2 size={16} /></div>}
@@ -45,11 +45,11 @@ function SortableCharacterCard({
       {c.avatarUrl ? (
         <img src={c.avatarUrl} alt="Avatar" className={`w-12 h-12 rounded-full object-cover mb-2 shadow-sm pointer-events-none ${isActive && !isBatchMode ? 'ring-2 ring-teal-400 ring-offset-2' : ''}`} />
       ) : (
-        <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-teal-100 to-emerald-100 flex items-center justify-center text-xl font-bold text-teal-700 shadow-inner mb-2 pointer-events-none ${isActive && !isBatchMode ? 'ring-2 ring-teal-400 ring-offset-2' : ''}`}>
+        <div className={`w-12 h-12 rounded-full bg-gradient-to-tr from-teal-100 to-emerald-100 flex items-center justify-center text-xl font-bold text-teal-700 dark:text-teal-300 shadow-inner mb-2 pointer-events-none ${isActive && !isBatchMode ? 'ring-2 ring-teal-400 ring-offset-2' : ''}`}>
           {c.card.data.name[0]}
         </div>
       )}
-      <span className="text-xs font-semibold text-slate-800 truncate w-full text-center pointer-events-none">{c.card.data.name}</span>
+      <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate w-full text-center pointer-events-none">{c.card.data.name}</span>
     </div>
   );
 }
@@ -76,17 +76,17 @@ function SortableRowCard({
       onContextMenu={(e) => { e.preventDefault(); if (!isBatchMode) onContextMenu(e); }}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
-      className={`relative group cursor-pointer rounded-lg border p-3 flex items-center space-x-3 transition-all ${isActive && !isBatchMode ? 'bg-white border-teal-400 shadow-md shadow-teal-400/20' : 'bg-white/60 border-gray-200 hover:bg-white hover:border-teal-200'} ${isChecked ? 'ring-2 ring-teal-500 bg-teal-50' : ''}`}
+      className={`relative group cursor-pointer rounded-lg border p-3 flex items-center space-x-3 transition-all ${isActive && !isBatchMode ? 'bg-white dark:bg-slate-900 border-teal-400 shadow-md shadow-teal-400/20' : 'bg-white/60 border-gray-200 dark:border-slate-800 hover:bg-white hover:border-teal-200'} ${isChecked ? 'ring-2 ring-teal-500 bg-teal-50 dark:bg-teal-950/40' : ''}`}
     >
       {isBatchMode && (
-        <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500 pointer-events-none" />
+        <input type="checkbox" checked={isChecked} onChange={() => {}} className="w-4 h-4 text-teal-600 dark:text-teal-400 rounded border-gray-300 focus:ring-teal-500 pointer-events-none" />
       )}
       {!isBatchMode && (
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-teal-100 text-teal-600' : 'bg-slate-100 text-slate-400'}`}>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-teal-100 dark:bg-teal-900/40 text-teal-600 dark:text-teal-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
           <Icon size={16} />
         </div>
       )}
-      <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-slate-800 truncate pointer-events-none">{title}</p></div>
+      <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate pointer-events-none">{title}</p></div>
     </div>
   );
 }
@@ -201,12 +201,24 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
 
   const handleOptimize = async () => {
     if (!editingChar) return;
-    const { apiKey } = useAppStore.getState();
-    if (!apiKey) return alert("Set your API key in Settings first");
+    const { voiceProvider, providerConfigs, apiKey: legacyKey } = useAppStore.getState();
+    const custom = providerConfigs.custom;
+    const useCustom = voiceProvider === 'custom' && !!custom?.baseUrl?.trim();
+    const apiKey = useCustom ? custom!.apiKey : legacyKey;
+    if (!apiKey) {
+      return alert(
+        useCustom ? 'Set your Custom provider API key in Settings first' : 'Set your API key in Settings first'
+      );
+    }
     
     try {
       setOptimizeLoading(true);
-      const optimizedText = await processCharacterCard(apiKey, editingChar.card);
+      const optimizedText = await processCharacterCard(
+        apiKey,
+        editingChar.card,
+        useCustom ? custom!.baseUrl : undefined,
+        useCustom ? custom!.model : undefined
+      );
       
       const newCard = { ...editingChar.card };
       if (!newCard.data) newCard.data = {};
@@ -254,8 +266,8 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
 
   if (isCollapsed) {
     return (
-      <div className="hidden md:flex w-16 bg-slate-50 border-r border-gray-200 flex-col items-center py-6 z-10 shrink-0 shadow-sm transition-all duration-300">
-        <button onClick={onToggleCollapse} className="p-2 mb-8 rounded-full bg-white border border-gray-200 text-teal-600 hover:text-teal-900 shadow-sm hover:shadow-md transition-all">
+      <div className="hidden md:flex w-16 bg-slate-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-800 flex-col items-center py-6 z-10 shrink-0 shadow-sm transition-all duration-300">
+        <button onClick={onToggleCollapse} className="p-2 mb-8 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-teal-600 dark:text-teal-400 hover:text-teal-900 shadow-sm hover:shadow-md transition-all">
           <ChevronRight size={20} />
         </button>
         <Library size={24} className="text-teal-400 mb-6" />
@@ -264,7 +276,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
   }
 
   return (
-    <div className="flex w-full md:w-80 bg-slate-50 border-r border-gray-200 flex-col p-6 overflow-y-auto z-10 shrink-0 transition-all duration-300 relative h-full">
+    <div className="flex w-full md:w-80 bg-slate-50 dark:bg-slate-800 border-r border-gray-200 dark:border-slate-800 flex-col p-6 overflow-y-auto z-10 shrink-0 transition-all duration-300 relative h-full">
       {/* Header Area */}
       <div className="flex flex-col mb-6 space-y-4">
         <div className="flex justify-between items-center">
@@ -272,18 +284,18 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           <div className="flex bg-slate-200/50 p-1 rounded-xl flex-1 mr-3">
             <button 
               onClick={() => setActiveTab('library')}
-              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'library' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'library' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             >
               <Library size={16} className="mr-1.5" /> Library
             </button>
             <button 
               onClick={() => setActiveTab('sessions')}
-              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'sessions' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'sessions' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
             >
               <MessageSquare size={16} className="mr-1.5" /> Sessions
             </button>
           </div>
-          <button onClick={onToggleCollapse} className="hidden md:flex p-1.5 rounded-full bg-white border border-gray-200 text-slate-400 hover:text-teal-700 shadow-sm transition-colors shrink-0">
+          <button onClick={onToggleCollapse} className="hidden md:flex p-1.5 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-400 hover:text-teal-700 shadow-sm transition-colors shrink-0">
             <ChevronLeft size={18} />
           </button>
         </div>
@@ -296,7 +308,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                   if (isBatchMode) cancelBatchMode();
                   else setIsBatchMode(true);
                 }} 
-                className={`flex-1 flex justify-center items-center py-2.5 rounded-xl border text-sm font-bold transition-all ${isBatchMode ? 'bg-teal-50 border-teal-200 text-teal-700 shadow-inner' : 'bg-white border-gray-200 text-slate-600 hover:border-teal-300 hover:text-teal-700 shadow-sm hover:shadow'}`}
+                className={`flex-1 flex justify-center items-center py-2.5 rounded-xl border text-sm font-bold transition-all ${isBatchMode ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900 text-teal-700 dark:text-teal-300 shadow-inner' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-teal-300 hover:text-teal-700 shadow-sm hover:shadow'}`}
               >
                 <ListChecks size={16} className="mr-1.5" /> {isBatchMode ? 'Cancel batch' : 'Batch select'}
               </button>
@@ -313,7 +325,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           {/* Character cards */}
           <div className="mb-6">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center space-x-2">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-teal-400"></span>
             <span>Characters</span>
           </h3>
@@ -348,7 +360,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* World books */}
       <div className="mb-10">
          <div className="flex justify-between items-center mb-3">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center space-x-2">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-teal-400"></span>
             <span>World books</span>
           </h3>
@@ -400,12 +412,12 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
               onTouchEnd={() => { if (longPressTimer.current) clearTimeout(longPressTimer.current); }}
               className={`p-3 rounded-xl border flex flex-col cursor-pointer transition-all ${
                 activeSessionId === session.id 
-                  ? 'bg-teal-50 border-teal-300 shadow-sm shadow-teal-500/10' 
-                  : 'bg-white border-gray-200 hover:border-teal-200 hover:shadow-sm'
+                  ? 'bg-teal-50 dark:bg-teal-950/40 border-teal-300 shadow-sm shadow-teal-500/10' 
+                  : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 hover:border-teal-200 hover:shadow-sm'
               }`}
             >
               <div className="flex items-center justify-between mb-1">
-                <h4 className="text-sm font-bold text-slate-800 truncate flex-1">{session.title}</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate flex-1">{session.title}</h4>
               </div>
               <div className="flex items-center justify-between text-[11px] text-slate-400 font-medium">
                 <span className="flex items-center">
@@ -421,14 +433,14 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
 
       {/* Batch Operations Bar */}
       {isBatchMode && (
-        <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md border border-gray-200 text-slate-800 rounded-xl shadow-2xl p-4 flex justify-between items-center z-50 animate-in slide-in-from-bottom-5">
+        <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-md border border-gray-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl shadow-2xl p-4 flex justify-between items-center z-50 animate-in slide-in-from-bottom-5">
           <span className="text-sm font-bold">{totalSelected} selected</span>
           <div className="flex space-x-3">
-            <button onClick={cancelBatchMode} className="text-slate-500 hover:text-slate-800 text-sm px-2 font-medium">Cancel</button>
+            <button onClick={cancelBatchMode} className="text-slate-500 dark:text-slate-400 hover:text-slate-800 text-sm px-2 font-medium">Cancel</button>
             <button 
               onClick={executeBatchDelete}
               disabled={totalSelected === 0}
-              className="bg-red-50 hover:bg-red-100 border border-red-200 disabled:opacity-50 text-red-600 font-semibold text-sm px-4 py-1.5 rounded-lg flex items-center transition-colors"
+              className="bg-red-50 dark:bg-red-950/40 hover:bg-red-100 border border-red-200 dark:border-red-900 disabled:opacity-50 text-red-600 font-semibold text-sm px-4 py-1.5 rounded-lg flex items-center transition-colors"
             >
               <Trash2 size={14} className="mr-1" /> Delete selected
             </button>
@@ -439,13 +451,13 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* Context Menu */}
       {contextMenu && (
         <div 
-          className="fixed z-50 bg-white border border-gray-200 shadow-xl rounded-lg w-32 py-1 overflow-hidden"
+          className="fixed z-50 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-xl rounded-lg w-32 py-1 overflow-hidden"
           style={{ top: contextMenu.y, left: contextMenu.x }}
           onClick={(e) => e.stopPropagation()}
         >
           {contextMenu.type === 'character' && (
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 flex items-center"
+              className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-700 flex items-center"
               onClick={() => {
                  const char = characters.find(c => c.id === contextMenu.id);
                  if (char) {
@@ -459,7 +471,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           )}
           {contextMenu.type === 'worldbook' && (
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 flex items-center"
+              className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-700 flex items-center"
               onClick={() => {
                  const wb = worldbooks.find(w => w.id === contextMenu.id);
                  if (wb) {
@@ -473,7 +485,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
           )}
           {contextMenu.type === 'session' && (
             <button 
-              className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-teal-50 hover:text-teal-700 flex items-center"
+              className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/40 hover:text-teal-700 flex items-center"
               onClick={() => {
                  const sess = sessions.find(s => s.id === contextMenu.id);
                  if (sess) {
@@ -502,26 +514,26 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* Character Edit Modal */}
       {editingChar && createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
-              <h3 className="font-bold text-slate-800">Edit character card</h3>
-              <button onClick={() => setEditingChar(null)} className="text-slate-400 hover:text-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Edit character card</h3>
+              <button onClick={() => setEditingChar(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={20} />
               </button>
             </div>
             
             <div className="p-6 flex-1 overflow-y-auto flex flex-col space-y-6">
               {/* Header Info */}
-              <div className="flex items-center space-x-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="flex items-center space-x-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-100">
                 <input type="file" accept="image/png, image/jpeg, image/webp" ref={fileEditRef} onChange={handleAvatarEdit} className="hidden" />
                 <div 
-                  className="w-20 h-20 shrink-0 rounded-full border-2 border-slate-200 shadow-sm overflow-hidden relative group cursor-pointer"
+                  className="w-20 h-20 shrink-0 rounded-full border-2 border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden relative group cursor-pointer"
                   onClick={() => fileEditRef.current?.click()}
                 >
                   {editingChar.avatarUrl ? (
                     <img src={editingChar.avatarUrl} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-slate-200 flex items-center justify-center text-3xl font-bold text-slate-400">{editingChar.name[0]}</div>
+                    <div className="w-full h-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-3xl font-bold text-slate-400">{editingChar.name[0]}</div>
                   )}
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Upload size={20} className="text-white" />
@@ -529,7 +541,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 </div>
                 
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Character name</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Character name</label>
                   <input 
                     type="text" 
                     value={editingChar.name} 
@@ -543,23 +555,23 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
               <div className="flex flex-col md:flex-row gap-6 flex-1 min-h-[400px]">
                 {/* Left Pane: Raw Text */}
                 <div className="flex-1 flex flex-col space-y-2">
-                  <label className="text-sm font-bold text-slate-700 flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center justify-between">
                     <span>Before (extracted from card)</span>
-                    <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">read-only</span>
+                    <span className="text-xs font-normal text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">read-only</span>
                   </label>
                   <textarea 
                     readOnly
                     value={initialRawText}
-                    className="flex-1 w-full p-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none"
+                    className="flex-1 w-full p-3 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none resize-none"
                     placeholder="Fields extracted from the original card..."
                   />
                 </div>
 
                 {/* Right Pane: Optimized Text */}
                 <div className="flex-1 flex flex-col space-y-2">
-                  <label className="text-sm font-bold text-teal-700 flex items-center justify-between">
+                  <label className="text-sm font-bold text-teal-700 dark:text-teal-300 flex items-center justify-between">
                     <span>After (final system prompt)</span>
-                    <span className="text-xs font-normal text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">editable</span>
+                    <span className="text-xs font-normal text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900 px-2 py-0.5 rounded-full">editable</span>
                   </label>
                   <textarea 
                     value={editingChar.card.data?.system_prompt || ''}
@@ -569,18 +581,18 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                       newCard.data.system_prompt = e.target.value;
                       setEditingChar({ ...editingChar, card: newCard });
                     }}
-                    className="flex-1 w-full p-3 text-sm text-slate-800 bg-white border border-teal-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 resize-none shadow-sm"
+                    className="flex-1 w-full p-3 text-sm text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 border border-teal-200 dark:border-teal-900 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 resize-none shadow-sm"
                     placeholder="The cleaned prompt will appear here..."
                   />
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-slate-50 shrink-0">
+            <div className="p-4 border-t border-gray-100 flex justify-between items-center bg-slate-50 dark:bg-slate-800 shrink-0">
               <button 
                 onClick={handleOptimize} 
                 disabled={optimizeLoading}
-                className="px-5 py-2.5 text-sm text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 shadow-sm rounded-lg font-bold transition-all disabled:opacity-50 flex items-center space-x-2"
+                className="px-5 py-2.5 text-sm text-blue-700 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 shadow-sm rounded-lg font-bold transition-all disabled:opacity-50 flex items-center space-x-2"
               >
                 {optimizeLoading ? 'Rewriting…' : '🤖 Clean & rewrite with AI'}
               </button>
@@ -596,19 +608,19 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* Worldbook Edit Modal */}
       {editingWb && createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">Edit world book</h3>
-              <button onClick={() => setEditingWb(null)} className="text-slate-400 hover:text-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Edit world book</h3>
+              <button onClick={() => setEditingWb(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full border-4 border-slate-100 shadow-sm flex items-center justify-center bg-teal-50 text-teal-400 mb-6">
+              <div className="w-24 h-24 rounded-full border-4 border-slate-100 shadow-sm flex items-center justify-center bg-teal-50 dark:bg-teal-950/40 text-teal-400 mb-6">
                 <Book size={40} />
               </div>
               <div className="w-full">
-                <label className="block text-sm font-medium text-slate-700 mb-1">World book name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">World book name</label>
                 <input 
                   type="text" 
                   value={editingWb.name} 
@@ -617,7 +629,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 />
               </div>
             </div>
-            <div className="p-4 border-t border-gray-100 flex justify-end bg-slate-50">
+            <div className="p-4 border-t border-gray-100 flex justify-end bg-slate-50 dark:bg-slate-800">
               <button onClick={async () => {
                 await updateWorldbook(editingWb.id, { ...editingWb.book, name: editingWb.name });
                 setEditingWb(null);
@@ -631,16 +643,16 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
       {/* Session Rename Modal */}
       {editingSession && createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">Rename session</h3>
-              <button onClick={() => setEditingSession(null)} className="text-slate-400 hover:text-slate-700">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-slate-50 dark:bg-slate-800">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100">Rename session</h3>
+              <button onClick={() => setEditingSession(null)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6 flex flex-col items-center">
               <div className="w-full">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Session title</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Session title</label>
                 <input 
                   type="text" 
                   value={editingSession.title} 
@@ -650,7 +662,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
                 />
               </div>
             </div>
-            <div className="p-4 border-t border-gray-100 flex justify-end bg-slate-50">
+            <div className="p-4 border-t border-gray-100 flex justify-end bg-slate-50 dark:bg-slate-800">
               <button onClick={async () => {
                 if (editingSession.title.trim()) {
                   await renameSession(editingSession.id, editingSession.title.trim());

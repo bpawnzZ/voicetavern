@@ -8,7 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# Build output (dist, and any ad-hoc dist2/dist3 verification dirs)
+dist*/
 dist-ssr
 *.local
 

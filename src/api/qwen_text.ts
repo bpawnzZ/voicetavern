@@ -19,7 +19,12 @@ Lorebook: ${embeddedLore}
 `.trim();
 }
 
-export async function processCharacterCard(apiKey: string, cardData: any): Promise<string> {
+export async function processCharacterCard(
+  apiKey: string,
+  cardData: any,
+  baseUrl?: string,
+  model?: string
+): Promise<string> {
   if (!apiKey) throw new Error("API Key is missing");
 
   const rawText = extractRawTextFromCard(cardData);
@@ -37,14 +42,18 @@ Requirements:
 3. If the source contains lots of bulleted settings or long rule explanations, keep their information intact — just strip the constraints demanding a special output format.
 4. The result must be a single block of plain text that can be fed straight to a model as a system prompt. Do not add any greeting or explanation of your own.`;
 
-  const response = await fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", {
+  // Any OpenAI-compatible chat endpoint; DashScope only as the fallback default.
+  const endpoint =
+    (baseUrl?.trim() || 'https://dashscope.aliyuncs.com/compatible-mode/v1').replace(/\/+$/, '') +
+    '/chat/completions';
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "qwen3.8-max",
+      model: model?.trim() || "qwen3.8-max",
       max_tokens: 100000,
       messages: [
         { role: "system", content: systemMessage },

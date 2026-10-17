@@ -1,4 +1,4 @@
-export type VoiceProvider = 'qwen' | 'xai' | 'openai' | 'gemini' | 'volcengine' | 'glm';
+export type VoiceProvider = 'qwen' | 'xai' | 'openai' | 'gemini' | 'volcengine' | 'glm' | 'custom';
 
 export interface RealtimeVoiceClient {
   connect(): Promise<void>;
@@ -8,6 +8,12 @@ export interface RealtimeVoiceClient {
 export interface ProviderConfig {
   apiKey: string;
   appId?: string; // For Volcengine / Doubao
+  // OpenAI-compatible endpoints ('custom' provider):
+  baseUrl?: string;      // chat + STT root, e.g. https://api.openai.com/v1
+  sttModel?: string;     // /audio/transcriptions model
+  ttsBaseUrl?: string;   // optional, falls back to baseUrl
+  ttsApiKey?: string;    // optional, falls back to apiKey
+  ttsModel?: string;     // /audio/speech model
   voice: string;
   model?: string;
 }
@@ -26,6 +32,7 @@ export const PROVIDERS: ProviderInfo[] = [
   { id: 'gemini', name: 'Google Gemini', subName: 'Multimodal Live' },
   { id: 'volcengine', name: 'Doubao (Volcengine)', subName: 'Doubao Realtime', hasAppId: true },
   { id: 'glm', name: 'Zhipu GLM', subName: 'GLM-Realtime' },
+  { id: 'custom', name: 'Custom', subName: 'OpenAI-compatible' },
 ];
 
 export const QWEN_VOICES = [
