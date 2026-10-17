@@ -1,26 +1,144 @@
 import { useRef } from 'react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useAppStore } from '../store';
 import { DEFAULT_MAIN_PROMPT, parseAuxPromptImport } from '../utils/preset_engine';
 import type { AuxPrompt } from '../utils/preset_engine';
-import { Plus, Upload, Trash2, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
+import { Plus, Upload, Trash2, ArrowUp, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
 
 const FIELD =
   'w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400/50';
 
+// FIELD carries w-full, which fights a fixed width in Tailwind's output order.
+const FIELD_SIZED = FIELD.replace('w-full ', '');
+
+interface CardProps {
+  prompt: AuxPrompt;
+  index: number;
+  count: number;
+  onUpdate: (id: string, patch: Partial<AuxPrompt>) => void;
+  onMove: (index: number, delta: number) => void;
+  onDelete: (id: string) => void;
+}
+
+function SortablePrompt({ prompt, index, count, onUpdate, onMove, onDelete }: CardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: prompt.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2 ${
+        isDragging ? 'opacity-60 shadow-lg z-20 relative' : ''
+      } ${prompt.enabled ? '' : 'opacity-70'}`}
+    >
+      <div className="flex items-center space-x-2">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="p-1 -ml-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-grab active:cursor-grabbing touch-none"
+          title="Drag to reorder"
+          aria-label={`Reorder ${prompt.name}`}
+        >
+          <GripVertical size={14} />
+        </button>
+        <span
+          className="text-[11px] font-mono text-slate-400 w-4 text-center shrink-0"
+          title={`Position ${index + 1} of ${count} in the stack`}
+        >
+          {index + 1}
+        </span>
+        <input
+          type="checkbox"
+          checked={prompt.enabled}
+          onChange={(e) => onUpdate(prompt.id, { enabled: e.target.checked })}
+          title="Enabled"
+          className="accent-teal-500 shrink-0"
+        />
+        <input
+          type="text"
+          value={prompt.name}
+          onChange={(e) => onUpdate(prompt.id, { name: e.target.value })}
+          className={FIELD + ' flex-1 min-w-0 py-1 text-xs font-semibold'}
+        />
+        <button
+          type="button"
+          onClick={() => onDelete(prompt.id)}
+          className="p-1 text-slate-400 hover:text-red-500 shrink-0"
+          title="Delete prompt"
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+
+      <div className="flex items-center space-x-2 pl-6 min-w-0">
+        <select
+          value={prompt.position}
+          onChange={(e) => onUpdate(prompt.id, { position: e.target.value as AuxPrompt['position'] })}
+          className={FIELD_SIZED + ' w-24 shrink-0 py-1 text-xs'}
+          title="Insertion position"
+        >
+          <option value="before">before</option>
+          <option value="after">after</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => onMove(index, -1)}
+          disabled={index === 0}
+          className="p-1 shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400"
+          title="Move up"
+        >
+          <ArrowUp size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onMove(index, 1)}
+          disabled={index === count - 1}
+          className="p-1 shrink-0 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400"
+          title="Move down"
+        >
+          <ArrowDown size={14} />
+        </button>
+      </div>
+
+      <textarea
+        value={prompt.content}
+        onChange={(e) => onUpdate(prompt.id, { content: e.target.value })}
+        placeholder="Prompt text — {{char}} and {{user}} are substituted."
+        rows={3}
+        className={FIELD + ' font-mono text-xs leading-relaxed resize-y'}
+      />
+    </div>
+  );
+}
+
 export default function PromptManager() {
   const { mainPrompt, setMainPrompt, auxPrompts, setAuxPrompts } = useAppStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const update = (id: string, patch: Partial<AuxPrompt>) => {
     setAuxPrompts(auxPrompts.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   };
 
   const move = (index: number, delta: number) => {
-    const next = [...auxPrompts];
     const target = index + delta;
-    if (target < 0 || target >= next.length) return;
-    [next[index], next[target]] = [next[target], next[index]];
-    setAuxPrompts(next);
+    if (target < 0 || target >= auxPrompts.length) return;
+    setAuxPrompts(arrayMove(auxPrompts, index, target));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = auxPrompts.findIndex((p) => p.id === active.id);
+    const to = auxPrompts.findIndex((p) => p.id === over.id);
+    if (from < 0 || to < 0) return;
+    setAuxPrompts(arrayMove(auxPrompts, from, to));
   };
 
   const addPrompt = () => {
@@ -51,6 +169,7 @@ export default function PromptManager() {
       <p className="text-[11px] text-slate-400 mb-3 leading-relaxed">
         Stack order: main prompt → prompts marked <em>before</em> → character card → world book
         (always-on + keyword matches) → prompts marked <em>after</em> → post-history → voice rules.
+        Drag a block, or use the arrows, to change the order.
       </p>
 
       <div>
@@ -79,70 +198,29 @@ export default function PromptManager() {
         </p>
       </div>
 
-      <div className="mt-4 space-y-3">
-        {auxPrompts.map((prompt, index) => (
-          <div
-            key={prompt.id}
-            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2"
-          >
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={prompt.enabled}
-                onChange={(e) => update(prompt.id, { enabled: e.target.checked })}
-                title="Enabled"
-                className="accent-teal-500"
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={auxPrompts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          <div className="mt-4 space-y-3">
+            {auxPrompts.map((prompt, index) => (
+              <SortablePrompt
+                key={prompt.id}
+                prompt={prompt}
+                index={index}
+                count={auxPrompts.length}
+                onUpdate={update}
+                onMove={move}
+                onDelete={(id) => setAuxPrompts(auxPrompts.filter((p) => p.id !== id))}
               />
-              <input
-                type="text"
-                value={prompt.name}
-                onChange={(e) => update(prompt.id, { name: e.target.value })}
-                className={FIELD + ' flex-1 py-1 text-xs font-semibold'}
-              />
-              <select
-                value={prompt.position}
-                onChange={(e) => update(prompt.id, { position: e.target.value as AuxPrompt['position'] })}
-                className={FIELD + ' w-28 py-1 text-xs'}
-                title="Insertion position"
-              >
-                <option value="before">before</option>
-                <option value="after">after</option>
-              </select>
-              <button
-                type="button"
-                onClick={() => move(index, -1)}
-                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                title="Move up"
-              >
-                <ArrowUp size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => move(index, 1)}
-                className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                title="Move down"
-              >
-                <ArrowDown size={14} />
-              </button>
-              <button
-                type="button"
-                onClick={() => setAuxPrompts(auxPrompts.filter((p) => p.id !== prompt.id))}
-                className="p-1 text-slate-400 hover:text-red-500"
-                title="Delete prompt"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-            <textarea
-              value={prompt.content}
-              onChange={(e) => update(prompt.id, { content: e.target.value })}
-              placeholder="Prompt text — {{char}} and {{user}} are substituted."
-              rows={3}
-              className={FIELD + ' font-mono text-xs leading-relaxed resize-y'}
-            />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
+
+      {auxPrompts.length === 0 && (
+        <p className="text-[11px] text-slate-400 mt-3">
+          No extra prompts yet. Add one, or import a SillyTavern preset JSON.
+        </p>
+      )}
 
       <div className="flex space-x-3 mt-3">
         <button

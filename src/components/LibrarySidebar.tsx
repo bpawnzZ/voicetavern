@@ -3,7 +3,8 @@ import { useAppStore } from '../store';
 import { parseCharacterCardPNG } from '../utils/tavern_parser';
 import { processCharacterCard, extractRawTextFromCard } from '../api/qwen_text';
 import type { Worldbook } from '../utils/worldbook_engine';
-import { Upload, Book, Library, Trash2, ChevronLeft, ChevronRight, CheckCircle2, ListChecks, Edit2, MessageSquare, Clock } from 'lucide-react';
+import { Upload, Book, Library, Trash2, ChevronLeft, ChevronRight, CheckCircle2, ListChecks, Edit2, MessageSquare, Clock, SlidersHorizontal } from 'lucide-react';
+import PromptManager from './PromptManager';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -98,7 +99,7 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
     sessions, activeSessionId, loadSession, removeSession, renameSession
   } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<'library' | 'sessions'>('library');
+  const [activeTab, setActiveTab] = useState<'library' | 'sessions' | 'prompts'>('library');
 
   const unifiedInputRef = useRef<HTMLInputElement>(null);
   const fileEditRef = useRef<HTMLInputElement>(null);
@@ -294,6 +295,12 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
             >
               <MessageSquare size={16} className="mr-1.5" /> Sessions
             </button>
+            <button 
+              onClick={() => setActiveTab('prompts')}
+              className={`flex-1 py-1.5 text-sm font-semibold rounded-lg flex justify-center items-center transition-all duration-300 ${activeTab === 'prompts' ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            >
+              <SlidersHorizontal size={16} className="mr-1.5" /> Prompts
+            </button>
           </div>
           <button onClick={onToggleCollapse} className="hidden md:flex p-1.5 rounded-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 text-slate-400 hover:text-teal-700 shadow-sm transition-colors shrink-0">
             <ChevronLeft size={18} />
@@ -320,7 +327,11 @@ export default function LibrarySidebar({ isCollapsed, onToggleCollapse }: { isCo
         )}
       </div>
       
-      {activeTab === 'library' ? (
+      {activeTab === 'prompts' ? (
+        <div className="animate-in fade-in">
+          <PromptManager />
+        </div>
+      ) : activeTab === 'library' ? (
         <>
           {/* Character cards */}
           <div className="mb-6">
